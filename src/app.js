@@ -7,8 +7,11 @@ require('dotenv').config();
 // Import configuration and validate environment
 const config = require('./config');
 
-// Import modules
+// Import core modules
 const { authController } = require('./core/auth');
+const database = require('./core/database');
+
+// Import feature modules
 const adminModule = require('./modules/admin');
 const errorHandler = require('./shared/middleware/errorHandler');
 
@@ -32,18 +35,33 @@ app.use(cookieParser());
 // Static files
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'OK',
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
-    });
+// Health check endpoint (enhanced with database status)
+app.get('/api/health', async (req, res) => {
+    try {
+        const dbStatus = await database.testConnection();
+
+        res.json({
+            success: true,
+            data: {
+                status: 'healthy',
+                timestamp: new Date().toISOString(),
+                database: dbStatus,
+                environment: config.nodeEnv
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: 'Health check failed',
+            details: error.message
+        });
+    }
 });
 
 // Authentication API routes
 app.post('/api/auth/login', authController.login);
 app.get('/api/auth/logout', authController.logout);
+app.get('/api/auth/verify', authController.verify);
 
 // Admin interface routes
 app.use('/admin', adminModule.routes);
@@ -54,19 +72,57 @@ app.get('/', (req, res) => res.redirect('/admin/dashboard'));
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
-// Start server
-const PORT = config.port;
-app.listen(PORT, () => {
-    console.log('='.repeat(50));
-    console.log('🚀 Marketing Automation System Started');
-    console.log('='.repeat(50));
-    console.log(`📡 Server running on: http://localhost:${PORT}`);
-    console.log(`🔐 Admin login: http://localhost:${PORT}/admin/login`);
-    console.log(`💡 Health check: http://localhost:${PORT}/api/health`);
-    console.log('='.repeat(50));
-    console.log(`Environment: ${config.nodeEnv}`);
-    console.log(`Admin user: ${config.auth.username}`);
-    console.log('='.repeat(50));
-});
+// Application initialization and startup
+async function startServer() {
+    try {
+        console.log('='.repeat(50));
+        console.log('🚀 Marketing Automation System Starting...');
+        console.log('='.repeat(50));
+
+        // Initialize database (non-blocking)
+        const dbInitialized = await database.initialize();
+
+        // Start server
+        const server = app.listen(config.port, () => {
+            console.log(`📡 Server running on: http://localhost:${config.port}`);
+            console.log(`🔐 Admin login: http://localhost:${config.port}/admin/login`);
+            console.log(`💡 Health check: http://localhost:${config.port}/api/health`);
+            console.log('='.repeat(50));
+            console.log(`Environment: ${config.nodeEnv}`);
+            console.log(`Admin user: ${config.auth.username}`);
+
+            if (dbInitialized && database.isReady()) {
+                console.log('💾 Database: Connected and ready');
+            } else {
+                console.log('⚠️  Database: Not available (running in limited mode)');
+            }
+
+            console.log('='.repeat(50));
+            console.log('✅ System ready for use!');
+        });
+
+        // Graceful shutdown handling
+        process.on('SIGINT', async () => {
+            console.log('\n🛑 Shutting down gracefully...');
+
+            server.close(async () => {
+                await database.close();
+                console.log('✅ Server shut down complete');
+                process.exit(0);
+            });
+        });
+
+        return server;
+
+    } catch (error) {
+        console.error('❌ Failed to start server:', error.message);
+        process.exit(1);
+    }
+}
+
+// Start the server
+if (require.main === module) {
+    startServer();
+}
 
 module.exports = app;

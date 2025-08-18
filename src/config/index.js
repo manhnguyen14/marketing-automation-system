@@ -27,12 +27,18 @@ module.exports = {
         password: process.env.ADMIN_PASSWORD,
         jwtSecret: process.env.JWT_SECRET
     },
-    // Future configuration for external services
+    // Add this database configuration section
+    database: {
+        url: process.env.DATABASE_URL,
+        poolMin: parseInt(process.env.DB_POOL_MIN) || 2,
+        poolMax: parseInt(process.env.DB_POOL_MAX) || 10,
+        acquireTimeout: parseInt(process.env.DB_ACQUIRE_TIMEOUT) || 30000,
+        ssl: process.env.NODE_ENV === 'production' // Enable SSL in production
+    },
     external: {
         postmarkToken: process.env.POSTMARK_TOKEN,
         geminiApiKey: process.env.GEMINI_API_KEY
     },
-    // Future job scheduler configuration
     scheduler: {
         jobTimeoutSeconds: parseInt(process.env.JOB_TIMEOUT_SECONDS) || 60,
         retryCount: parseInt(process.env.RETRY_COUNT) || 3,

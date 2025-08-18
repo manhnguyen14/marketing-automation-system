@@ -6,6 +6,10 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
+    "db:migrate": "node scripts/migrate.js",
+    "db:status": "node scripts/db-status.js",
+    "db:reset": "node scripts/db-reset.js",
+    "db:seed": "node scripts/seed-data.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -13,7 +17,8 @@
     "automation",
     "email",
     "campaigns",
-    "nodejs"
+    "nodejs",
+    "postgresql"
   ],
   "author": "Marketing Automation Team",
   "license": "MIT",
@@ -22,7 +27,8 @@
     "express-handlebars": "^7.0.0",
     "jsonwebtoken": "^9.0.0",
     "cookie-parser": "^1.4.6",
-    "dotenv": "^16.0.0"
+    "dotenv": "^16.0.0",
+    "pg": "^8.8.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.0"

@@ -9,6 +9,10 @@
 - src/core/auth/controllers/
 - src/core/auth/middleware/
 - src/core/auth/services/
+- src/core/database/
+- src/core/database/models/
+- src/core/database/services/
+- src/core/database/migrations/
 - src/modules/
 - src/modules/admin/
 - src/modules/admin/controllers/
@@ -25,6 +29,7 @@
 - tests/unit/
 - tests/unit/core/
 - tests/unit/core/auth/
+- tests/unit/core/database/
 - tests/unit/modules/
 - tests/unit/modules/admin/
 - tests/integration/
@@ -43,6 +48,23 @@
 - src/core/auth/middleware/authMiddleware.js
 - src/core/auth/services/authService.js
 - src/core/auth/index.js
+- src/core/database/connection.js
+- src/core/database/migrationRunner.js
+- src/core/database/models/Customer.js
+- src/core/database/models/Book.js
+- src/core/database/models/ReadingActivity.js
+- src/core/database/models/Job.js
+- src/core/database/models/EmailRecord.js
+- src/core/database/services/customerService.js
+- src/core/database/services/bookService.js
+- src/core/database/services/activityService.js
+- src/core/database/migrations/000_create_schema_migrations.sql
+- src/core/database/migrations/001_create_customers.sql
+- src/core/database/migrations/002_create_books.sql
+- src/core/database/migrations/003_create_reading_activities.sql
+- src/core/database/migrations/004_create_jobs.sql
+- src/core/database/migrations/005_create_email_records.sql
+- src/core/database/index.js
 - src/modules/admin/controllers/authUIController.js
 - src/modules/admin/controllers/dashboardController.js
 - src/modules/admin/views/layouts/main.hbs
@@ -53,38 +75,65 @@
 - src/modules/admin/index.js
 - src/shared/middleware/errorHandler.js
 - public/css/admin.css
-- scripts/setup.js
+- scripts/migrate.js
+- scripts/db-status.js
+- scripts/db-reset.js
+- scripts/seed-data.js
 - tests/unit/core/auth/authService.test.js
 - tests/unit/core/auth/authController.test.js
 - tests/unit/core/auth/authMiddleware.test.js
+- tests/unit/core/database/customerService.test.js
+- tests/unit/core/database/models/Customer.test.js
 - tests/unit/modules/admin/authUIController.test.js
 - tests/unit/modules/admin/dashboardController.test.js
 - tests/integration/auth-flow.test.js
+- tests/integration/database-operations.test.js
 - tests/integration/admin-interface.test.js
 - tests/integration/api-endpoints.test.js
 - tests/fixtures/testData.js
 - tests/fixtures/mockUsers.json
+- tests/fixtures/sampleCustomers.json
 
 ### file_purposes:
-- package.json: "Node.js project configuration with dependencies and scripts"
-- .env.example: "Environment variables template with secure defaults"
-- src/app.js: "Express application entry point with middleware and route configuration"
-- src/config/index.js: "Environment variable validation and configuration export"
-- src/core/auth/services/authService.js: "JWT operations, credential validation, token management"
-- src/core/auth/controllers/authController.js: "Authentication API endpoints for login/logout/verify"
-- src/core/auth/middleware/authMiddleware.js: "Route protection, session management, user context extraction"
-- src/core/auth/index.js: "Authentication module exports aggregation"
-- src/modules/admin/controllers/authUIController.js: "Login page rendering and UI logic"
-- src/modules/admin/controllers/dashboardController.js: "Admin dashboard rendering and data preparation"
-- src/modules/admin/views/layouts/main.hbs: "Base HTML template with navigation and common elements"
-- src/modules/admin/views/login.hbs: "Login form with client-side validation and error handling"
-- src/modules/admin/views/dashboard.hbs: "Admin dashboard with system status and feature overview"
-- src/modules/admin/views/error.hbs: "Error page template for HTTP errors and exceptions"
-- src/modules/admin/routes/index.js: "Admin interface URL routing and middleware application"
-- src/modules/admin/index.js: "Admin module exports aggregation"
-- src/shared/middleware/errorHandler.js: "Global error handling for API and web requests"
-- public/css/admin.css: "Complete responsive styling for admin interface"
-- scripts/setup.js: "Automated project setup with secure default generation"
+- package.json: "Node.js project configuration with dependencies including PostgreSQL driver"
+- .env.example: "Environment variables template including database configuration"
+- src/app.js: "Express application entry point with database initialization and enhanced health check"
+- src/config/index.js: "Environment variable validation including database configuration"
+- src/core/auth/services/authService.js: "JWT operations, credential validation, token management (unchanged)"
+- src/core/auth/controllers/authController.js: "Authentication API endpoints for login/logout/verify (unchanged)"
+- src/core/auth/middleware/authMiddleware.js: "Route protection, session management, user context extraction (unchanged)"
+- src/core/auth/index.js: "Authentication module exports aggregation (unchanged)"
+- src/core/database/connection.js: "PostgreSQL connection management with SSL support and connection pooling"
+- src/core/database/migrationRunner.js: "Database migration execution, tracking, and rollback functionality"
+- src/core/database/models/Customer.js: "Customer data model with validation and business logic methods"
+- src/core/database/models/Book.js: "Book catalog model with search and categorization methods"
+- src/core/database/models/ReadingActivity.js: "Reading behavior tracking model with analytics methods"
+- src/core/database/models/Job.js: "Scheduled job model with status management and retry logic"
+- src/core/database/models/EmailRecord.js: "Email campaign tracking model with engagement analytics"
+- src/core/database/services/customerService.js: "Customer CRUD operations and marketing-focused queries"
+- src/core/database/services/bookService.js: "Book management operations and recommendation queries"
+- src/core/database/services/activityService.js: "Reading activity tracking and behavioral analysis"
+- src/core/database/migrations/000_create_schema_migrations.sql: "Migration tracking table creation"
+- src/core/database/migrations/001_create_customers.sql: "Customer table creation with indexes and constraints"
+- src/core/database/migrations/002_create_books.sql: "Books table creation with categorization support"
+- src/core/database/migrations/003_create_reading_activities.sql: "Reading activity tracking table with referential integrity"
+- src/core/database/migrations/004_create_jobs.sql: "Job scheduling table for email automation"
+- src/core/database/migrations/005_create_email_records.sql: "Email campaign tracking table with Postmark integration"
+- src/core/database/index.js: "Database module exports and initialization coordination"
+- src/modules/admin/controllers/authUIController.js: "Login page rendering and UI logic (unchanged)"
+- src/modules/admin/controllers/dashboardController.js: "Admin dashboard rendering and data preparation (unchanged)"
+- src/modules/admin/views/layouts/main.hbs: "Base HTML template with navigation and common elements (unchanged)"
+- src/modules/admin/views/login.hbs: "Login form with client-side validation and error handling (unchanged)"
+- src/modules/admin/views/dashboard.hbs: "Admin dashboard with system status and feature overview (unchanged)"
+- src/modules/admin/views/error.hbs: "Error page template for HTTP errors and exceptions (unchanged)"
+- src/modules/admin/routes/index.js: "Admin interface URL routing and middleware application (unchanged)"
+- src/modules/admin/index.js: "Admin module exports aggregation (unchanged)"
+- src/shared/middleware/errorHandler.js: "Global error handling for API and web requests (unchanged)"
+- public/css/admin.css: "Complete responsive styling for admin interface (unchanged)"
+- scripts/migrate.js: "Migration execution script with status reporting"
+- scripts/db-status.js: "Database connection and migration status checking script"
+- scripts/db-reset.js: "Database reset script with confirmation prompts"
+- scripts/seed-data.js: "Sample data generation script for development"
 
 ## MODULE_ARCHITECTURE
 
@@ -92,15 +141,15 @@
 - location: "src/core/"
 - purpose: "Essential system infrastructure independent of business features"
 - characteristics: ["no_dependencies_on_feature_modules", "provides_foundational_services", "reusable_across_features"]
-- current_modules: ["auth"]
-- planned_modules: ["database", "scheduler", "pipeline"]
+- current_modules: ["auth", "database"]
+- planned_modules: ["scheduler", "pipeline", "email"]
 
 ### feature_modules:
 - location: "src/modules/"
 - purpose: "Business functionality and user interfaces"
 - characteristics: ["can_depend_on_core_modules", "no_lateral_dependencies", "implements_business_logic"]
 - current_modules: ["admin"]
-- planned_modules: ["email", "integration", "analytics"]
+- planned_modules: ["email_management", "integration", "analytics"]
 
 ### shared_services:
 - location: "src/shared/"
@@ -109,6 +158,76 @@
 - current_services: ["middleware"]
 - planned_services: ["validation", "logging", "formatting"]
 
+## DATABASE_ARCHITECTURE
+
+### database_core_module:
+- location: "src/core/database/"
+- purpose: "PostgreSQL integration and data management foundation"
+- characteristics: ["connection_management", "migration_system", "data_models", "business_services"]
+
+### data_models:
+- src/core/database/models/Customer.js:
+  - primary_function: "Customer data model for marketing automation"
+  - key_responsibilities: ["email_validation", "status_management", "topic_interest_matching", "business_logic_methods"]
+  - dependencies: []
+  - used_by: ["customerService", "email_campaigns", "activity_tracking"]
+
+- src/core/database/models/Book.js:
+  - primary_function: "Book catalog model for ebook platform"
+  - key_responsibilities: ["title_author_management", "genre_categorization", "topic_matching", "publication_status"]
+  - dependencies: []
+  - used_by: ["bookService", "reading_activities", "recommendation_engine"]
+
+- src/core/database/models/ReadingActivity.js:
+  - primary_function: "Customer reading behavior tracking"
+  - key_responsibilities: ["progress_tracking", "activity_type_validation", "engagement_analytics", "completion_detection"]
+  - dependencies: []
+  - used_by: ["activityService", "marketing_automation", "customer_insights"]
+
+- src/core/database/models/Job.js:
+  - primary_function: "Scheduled job management for automation"
+  - key_responsibilities: ["status_tracking", "execution_timing", "retry_logic", "performance_metrics"]
+  - dependencies: []
+  - used_by: ["job_scheduler", "email_campaigns", "pipeline_automation"]
+
+- src/core/database/models/EmailRecord.js:
+  - primary_function: "Email campaign tracking and analytics"
+  - key_responsibilities: ["delivery_tracking", "engagement_metrics", "postmark_integration", "campaign_analytics"]
+  - dependencies: []
+  - used_by: ["email_service", "campaign_reporting", "customer_engagement"]
+
+### data_services:
+- src/core/database/services/customerService.js:
+  - primary_function: "Customer CRUD operations and marketing queries"
+  - key_responsibilities: ["customer_management", "targeting_queries", "segmentation", "bulk_operations"]
+  - dependencies: ["connection", "Customer_model"]
+  - used_by: ["marketing_campaigns", "admin_interface", "data_import"]
+
+- src/core/database/services/bookService.js:
+  - primary_function: "Book catalog management and recommendation queries"
+  - key_responsibilities: ["catalog_management", "search_operations", "recommendation_logic", "genre_analytics"]
+  - dependencies: ["connection", "Book_model"]
+  - used_by: ["content_recommendations", "admin_interface", "activity_tracking"]
+
+- src/core/database/services/activityService.js:
+  - primary_function: "Reading activity tracking and behavioral analysis"
+  - key_responsibilities: ["activity_logging", "progress_tracking", "engagement_analytics", "abandonment_detection"]
+  - dependencies: ["connection", "ReadingActivity_model"]
+  - used_by: ["marketing_automation", "customer_insights", "recommendation_engine"]
+
+### migration_system:
+- src/core/database/migrationRunner.js:
+  - primary_function: "Database schema migration management"
+  - key_responsibilities: ["migration_execution", "version_tracking", "rollback_support", "status_reporting"]
+  - dependencies: ["connection", "filesystem"]
+  - used_by: ["application_startup", "deployment_scripts", "development_tools"]
+
+- migration_files:
+  - purpose: "SQL schema definitions for database structure"
+  - naming_convention: "Sequential numbering (001, 002, 003) with descriptive names"
+  - execution_order: "Alphabetical sorting ensures proper dependency resolution"
+  - characteristics: ["idempotent", "transactional", "documented", "reversible_tracking"]
+
 ## DEPENDENCY_RELATIONSHIPS
 
 ### dependency_flow:
@@ -116,96 +235,40 @@
 - core_modules_depend_on: ["config", "external_libraries"]
 - shared_services_depend_on: ["external_libraries_only"]
 - config_depends_on: ["environment_variables"]
+- database_depends_on: ["postgresql", "connection_pooling"]
 
 ### import_patterns:
-- app_js_imports: ["config/index.js", "core/auth", "modules/admin", "shared/middleware/errorHandler"]
+- app_js_imports: ["config/index.js", "core/auth", "core/database", "modules/admin", "shared/middleware/errorHandler"]
 - core_auth_exports: ["authService", "authController", "authMiddleware"]
+- core_database_exports: ["connection", "models", "services", "migrationRunner", "initialize"]
 - modules_admin_exports: ["authUIController", "dashboardController", "routes"]
 
 ### module_communication:
-- admin_module_uses: ["core/auth for authentication", "shared/middleware for error handling"]
+- admin_module_uses: ["core/auth for authentication", "core/database for data access", "shared/middleware for error handling"]
 - auth_module_provides: ["JWT token management", "route protection", "session handling"]
+- database_module_provides: ["data persistence", "customer management", "analytics queries", "migration system"]
 - shared_middleware_provides: ["error handling", "logging utilities"]
-
-## FILE_RESPONSIBILITIES
-
-### configuration_files:
-- src/config/index.js:
-    - primary_function: "Environment variable validation and configuration export"
-    - key_responsibilities: ["validate_required_env_vars", "export_config_object", "handle_startup_errors"]
-    - dependencies: ["dotenv"]
-    - used_by: ["all_modules_requiring_configuration"]
-
-- .env.example:
-    - primary_function: "Environment variable template and documentation"
-    - key_responsibilities: ["document_required_variables", "provide_secure_defaults", "serve_as_deployment_template"]
-    - dependencies: []
-    - used_by: ["setup_scripts", "deployment_processes"]
-
-### authentication_core_module:
-- src/core/auth/services/authService.js:
-    - primary_function: "Authentication business logic and JWT operations"
-    - key_responsibilities: ["validate_credentials", "generate_jwt_tokens", "verify_tokens", "check_expiration"]
-    - dependencies: ["jsonwebtoken", "config"]
-    - used_by: ["authController", "authMiddleware"]
-
-- src/core/auth/controllers/authController.js:
-    - primary_function: "Authentication API endpoints"
-    - key_responsibilities: ["handle_login_requests", "process_logout", "provide_token_verification", "set_secure_cookies"]
-    - dependencies: ["authService"]
-    - used_by: ["express_router", "admin_interface"]
-
-- src/core/auth/middleware/authMiddleware.js:
-    - primary_function: "Route protection and session management"
-    - key_responsibilities: ["protect_routes", "redirect_authenticated_users", "extract_user_context", "handle_token_validation"]
-    - dependencies: ["authService"]
-    - used_by: ["express_routes", "admin_module"]
-
-### admin_interface_module:
-- src/modules/admin/controllers/authUIController.js:
-    - primary_function: "Authentication user interface rendering"
-    - key_responsibilities: ["render_login_page", "handle_login_ui_logic", "provide_template_context"]
-    - dependencies: []
-    - used_by: ["admin_routes"]
-
-- src/modules/admin/controllers/dashboardController.js:
-    - primary_function: "Admin dashboard rendering"
-    - key_responsibilities: ["render_dashboard", "provide_system_status", "handle_user_context"]
-    - dependencies: []
-    - used_by: ["admin_routes"]
-
-- src/modules/admin/views/layouts/main.hbs:
-    - primary_function: "Base template layout for admin interface"
-    - key_responsibilities: ["provide_html_structure", "include_navigation", "handle_conditional_content", "link_resources"]
-    - dependencies: ["admin.css"]
-    - used_by: ["all_admin_view_templates"]
-
-- src/modules/admin/routes/index.js:
-    - primary_function: "Admin interface URL routing"
-    - key_responsibilities: ["define_routes", "apply_middleware", "map_urls_to_controllers", "handle_redirects"]
-    - dependencies: ["authMiddleware", "UI_controllers"]
-    - used_by: ["app.js"]
 
 ## ROUTE_ARCHITECTURE
 
 ### api_routes:
 - base_path: "/api/"
 - authentication_routes:
-    - POST /api/auth/login: "Admin authentication endpoint with credential validation"
-    - GET /api/auth/logout: "Session termination and cookie clearing"
-    - GET /api/auth/verify: "Token validation and user context retrieval"
+  - POST /api/auth/login: "Admin authentication endpoint with credential validation"
+  - GET /api/auth/logout: "Session termination and cookie clearing"
+  - GET /api/auth/verify: "Token validation and user context retrieval"
 - system_routes:
-    - GET /api/health: "System health check and status information"
+  - GET /api/health: "System health check with database connectivity status"
 
 ### admin_interface_routes:
 - base_path: "/admin/"
 - public_routes:
-    - GET /admin/login: "Login page rendering (redirects if authenticated)"
+  - GET /admin/login: "Login page rendering (redirects if authenticated)"
 - protected_routes:
-    - GET /admin/dashboard: "Main admin dashboard (requires authentication)"
-    - GET /admin/: "Redirects to dashboard"
+  - GET /admin/dashboard: "Main admin dashboard (requires authentication)"
+  - GET /admin/: "Redirects to dashboard"
 - root_routes:
-    - GET /: "Redirects to admin dashboard"
+  - GET /: "Redirects to admin dashboard"
 
 ### middleware_application:
 - public_routes: ["/api/auth/login", "/api/health"]
@@ -222,112 +285,90 @@
 4. route_access: "dashboardController.showDashboard renders page"
 5. template_render: "dashboard.hbs with user context"
 
-### login_process:
-1. form_submission: "POST /api/auth/login with credentials"
-2. credential_validation: "authService.validateCredentials against env vars"
-3. token_generation: "authService.generateToken creates JWT"
-4. cookie_setting: "HTTP-only secure cookie with token"
-5. client_redirect: "JavaScript redirect to dashboard"
+### database_initialization_flow:
+1. application_startup: "app.js calls database.initialize()"
+2. connection_setup: "connection.js establishes PostgreSQL pool"
+3. service_initialization: "customerService, bookService, activityService initialize"
+4. migration_execution: "migrationRunner.runMigrations() applies schema updates"
+5. status_verification: "database.isReady() confirms operational state"
 
-### session_management:
-1. cookie_extraction: "authMiddleware reads auth_token cookie"
-2. token_verification: "authService.verifyToken validates JWT"
-3. expiration_check: "authService.isTokenExpired checks validity"
-4. user_context: "req.user populated with token data"
-5. route_continuation: "next() or redirect to login"
+### customer_data_flow:
+1. data_request: "customerService.getCustomersForTargeting(criteria)"
+2. query_execution: "PostgreSQL query with filtering and pagination"
+3. model_creation: "Customer.fromDatabaseRow() for each result"
+4. business_logic: "customer.canReceiveEmails() validation"
+5. response_formatting: "customer.toJSON() for API response"
+
+## SCRIPT_UTILITIES
+
+### database_management_scripts:
+- scripts/migrate.js:
+  - primary_function: "Execute pending database migrations"
+  - usage: "npm run db:migrate"
+  - output: "Migration status and completion confirmation"
+
+- scripts/db-status.js:
+  - primary_function: "Display comprehensive database status"
+  - usage: "npm run db:status"
+  - output: "Connection status, migrations, data statistics"
+
+- scripts/db-reset.js:
+  - primary_function: "Reset database with confirmation prompts"
+  - usage: "npm run db:reset"
+  - output: "Complete database reset and fresh migration execution"
+
+- scripts/seed-data.js:
+  - primary_function: "Generate sample data for development"
+  - usage: "npm run db:seed"
+  - output: "Sample customers, books, and reading activities"
 
 ## EXTENSION_PATTERNS
+
+### adding_new_database_model:
+1. create_model_file: "src/core/database/models/NewModel.js"
+2. implement_validation: "business logic methods and data validation"
+3. create_migration: "src/core/database/migrations/006_create_new_table.sql"
+4. create_service: "src/core/database/services/newModelService.js"
+5. update_exports: "src/core/database/index.js includes new service"
+6. run_migration: "npm run db:migrate to apply schema changes"
 
 ### adding_new_feature_module:
 1. create_directory: "src/modules/new-feature/"
 2. implement_structure: ["controllers/", "services/", "routes/", "views/"]
-3. add_exports: "index.js with module aggregation"
-4. register_routes: "app.js route registration"
-5. add_dependencies: "import from core/ modules as needed"
+3. database_dependencies: "import database services from core/database"
+4. auth_dependencies: "import auth middleware from core/auth"
+5. register_routes: "app.js route registration"
+6. update_navigation: "admin interface menu updates"
 
-### adding_new_core_module:
-1. create_directory: "src/core/new-core/"
-2. implement_structure: ["services/", "controllers/", "middleware/"]
-3. ensure_independence: "no dependencies on feature modules"
-4. add_exports: "index.js with module aggregation"
-5. update_imports: "feature modules import as needed"
-
-### adding_shared_service:
-1. create_directory: "src/shared/new-service/"
-2. implement_utilities: "pure utility functions only"
-3. no_business_logic: "avoid module-specific code"
-4. export_functions: "clear function exports"
-5. import_usage: "import where needed with clear dependencies"
+### adding_database_migration:
+1. create_migration_file: "src/core/database/migrations/XXX_descriptive_name.sql"
+2. write_idempotent_sql: "CREATE TABLE IF NOT EXISTS, ALTER TABLE IF conditions"
+3. add_indexes: "CREATE INDEX IF NOT EXISTS for performance"
+4. add_comments: "COMMENT ON TABLE/COLUMN for documentation"
+5. test_migration: "npm run db:migrate in development"
+6. verify_rollback: "ensure migration tracking supports rollback"
 
 ## FUTURE_INTEGRATION_POINTS
 
-### database_integration:
-- target_location: "src/core/database/"
-- required_components: ["connection.js", "models/", "services/", "migrations/"]
-- integration_points: ["update authService to use database", "user model for authentication"]
-- dependency_changes: ["core auth depends on core database"]
-
 ### email_campaign_module:
 - target_location: "src/modules/email/"
-- required_components: ["controllers/", "services/", "templates/", "routes/"]
-- integration_points: ["depends on core auth for protection", "uses core database for data"]
-- new_routes: ["/admin/campaigns", "/api/email/send", "/api/email/templates"]
+- database_dependencies: ["customers for targeting", "email_records for tracking", "jobs for scheduling"]
+- core_dependencies: ["auth for protection", "database for persistence"]
+- new_tables: ["ai_content_review", "email_templates", "campaign_batches"]
 
 ### job_scheduler_core:
 - target_location: "src/core/scheduler/"
-- required_components: ["services/", "models/", "cron/", "queue/"]
-- integration_points: ["used by email module for automation", "depends on database for persistence"]
-- background_services: ["cron jobs", "task processing", "retry mechanisms"]
+- database_dependencies: ["jobs table for persistence", "email_records for tracking"]
+- integration_points: ["email module for execution", "pipeline module for triggers"]
+- cron_functionality: ["minute-based execution", "retry mechanisms", "status tracking"]
+
+### external_integrations:
+- postmark_integration: "email sending and tracking via API"
+- gemini_ai_integration: "content generation with customer personalization"
+- crm_synchronization: "customer data import and synchronization"
+- analytics_reporting: "performance metrics and customer insights"
 
 ## TESTING_STRUCTURE
 
 ### directories:
-- tests/
-- tests/unit/
-- tests/unit/core/
-- tests/unit/core/auth/
-- tests/unit/modules/
-- tests/unit/modules/admin/
-- tests/integration/
-- tests/fixtures/
-
-### test_files:
-- tests/unit/core/auth/authService.test.js: "Test JWT operations and credential validation"
-- tests/unit/core/auth/authController.test.js: "Test API endpoints with mock requests"
-- tests/unit/core/auth/authMiddleware.test.js: "Test route protection and session handling"
-- tests/unit/modules/admin/authUIController.test.js: "Test login page rendering"
-- tests/unit/modules/admin/dashboardController.test.js: "Test dashboard rendering with user context"
-- tests/integration/auth-flow.test.js: "Test complete login/logout user journey"
-- tests/integration/admin-interface.test.js: "Test admin interface navigation and protection"
-- tests/integration/api-endpoints.test.js: "Test API endpoints with real HTTP requests"
-- tests/fixtures/testData.js: "Mock data for testing scenarios"
-- tests/fixtures/mockUsers.json: "Test user data for authentication tests"
-
-### testing_patterns:
-- unit_testing: ["test individual components in isolation", "mock external dependencies", "focus on business logic"]
-- integration_testing: ["test component interactions", "use test database", "verify complete workflows"]
-- mock_strategy: ["mock JWT operations", "mock environment variables", "mock external APIs"]
-- coverage_targets: ["80% for core modules", "70% for feature modules", "90% for critical paths"]
-
-## DEVELOPMENT_GUIDELINES
-
-### code_organization_principles:
-- single_responsibility: "Each file handles one major concern"
-- consistent_structure: "All modules follow same organization pattern"
-- clear_naming: "File names describe specific purpose"
-- minimal_dependencies: "Reduce coupling between modules"
-
-### module_creation_checklist:
-1. determine_module_type: "core infrastructure or business functionality"
-2. create_structure: "appropriate directory structure following patterns"
-3. implement_components: "controllers, services, routes as needed"
-4. update_exports: "module index.js with clean interface"
-5. register_integration: "routes in app.js, dependencies in imports"
-
-### dependency_management_rules:
-- upward_dependencies_only: "feature modules can depend on core modules"
-- no_lateral_dependencies: "feature modules cannot depend on other feature modules"
-- shared_service_extraction: "common functionality goes to shared services"
-- clear_import_paths: "explicit imports showing module relationships"
-
-This structure provides comprehensive guidance for AI agents to understand, extend, and maintain the project while following established architectural patterns.
+- tests/unit/core/database
