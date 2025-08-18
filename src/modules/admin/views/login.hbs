@@ -1,0 +1,127 @@
+<div class="login-container">
+    <div class="login-form">
+        <div class="login-header">
+            <h1>Marketing Automation</h1>
+            <p>Admin Login</p>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        placeholder="Enter username"
+                        required
+                        autocomplete="username"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Enter password"
+                        required
+                        autocomplete="current-password"
+                >
+            </div>
+
+            <div class="form-group">
+                <button type="submit" id="loginButton" class="btn-primary">
+                    Login
+                </button>
+            </div>
+        </form>
+
+        <div id="error-message" class="error-alert" style="display: none;"></div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('error-message');
+        const loginButton = document.getElementById('loginButton');
+
+        // Clear previous errors
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+
+        // Basic validation
+        if (!username || !password) {
+            showError('Please enter both username and password');
+            return;
+        }
+
+        // Show loading state
+        loginButton.textContent = 'Logging in...';
+        loginButton.disabled = true;
+
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Show success message briefly
+                loginButton.textContent = 'Success! Redirecting...';
+                loginButton.style.backgroundColor = '#28a745';
+
+                // Redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = result.redirect || '/admin/dashboard';
+                }, 500);
+
+            } else {
+                showError(result.error || 'Login failed. Please try again.');
+                resetButton();
+            }
+
+        } catch (error) {
+            console.error('Login error:', error);
+            showError('Network error. Please check your connection and try again.');
+            resetButton();
+        }
+
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+
+            // Shake animation for error
+            errorDiv.style.animation = 'shake 0.5s ease-in-out';
+            setTimeout(() => {
+                errorDiv.style.animation = '';
+            }, 500);
+        }
+
+        function resetButton() {
+            loginButton.textContent = 'Login';
+            loginButton.disabled = false;
+            loginButton.style.backgroundColor = '';
+        }
+    });
+
+    // Add shake animation for error messages
+    const style = document.createElement('style');
+    style.textContent = `
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+`;
+    document.head.appendChild(style);
+</script>

@@ -1,0 +1,33 @@
+{
+  "name": "marketing-automation-system",
+  "version": "1.0.0",
+  "description": "Node.js-based marketing automation system with code-based email campaigns",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "marketing",
+    "automation",
+    "email",
+    "campaigns",
+    "nodejs"
+  ],
+  "author": "Marketing Automation Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.0",
+    "express-handlebars": "^7.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

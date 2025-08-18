@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{#if title}}{{title}} - {{/if}}Marketing Automation Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+{{#if showNav}}
+    <nav class="topbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/admin/dashboard">Marketing Automation</a>
+            </div>
+            <div class="nav-links">
+                <a href="/admin/dashboard" class="nav-link">
+                    Dashboard
+                </a>
+                <a href="/api/auth/logout" class="nav-link logout">
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+{{/if}}
+
+<main class="content">
+    {{{body}}}
+</main>
+
+{{#unless showNav}}
+    <!-- Login page specific scripts -->
+    <script>
+        // Focus on username field when login page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const usernameField = document.getElementById('username');
+            if (usernameField) {
+                usernameField.focus();
+            }
+        });
+    </script>
+{{/unless}}
+</body>
+</html>

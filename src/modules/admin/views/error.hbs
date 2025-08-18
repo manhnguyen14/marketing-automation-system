@@ -1,0 +1,98 @@
+<div class="error-container">
+    <div class="error-content">
+        <div class="error-icon">
+            {{#if (eq title "Page Not Found")}}
+                <span class="error-code">404</span>
+            {{else if (eq title "Server Error")}}
+                <span class="error-code">500</span>
+            {{else}}
+                <span class="error-code">!</span>
+            {{/if}}
+        </div>
+
+        <div class="error-message">
+            <h1>{{title}}</h1>
+            <p class="error-description">{{message}}</p>
+            {{#if details}}
+                <p class="error-details">{{details}}</p>
+            {{/if}}
+        </div>
+
+        <div class="error-actions">
+            <a href="/admin/dashboard" class="btn-primary">Return to Dashboard</a>
+            <button onclick="history.back()" class="btn-secondary">Go Back</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .error-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 70vh;
+        padding: 2rem;
+    }
+
+    .error-content {
+        text-align: center;
+        max-width: 500px;
+    }
+
+    .error-icon {
+        margin-bottom: 2rem;
+    }
+
+    .error-code {
+        font-size: 6rem;
+        font-weight: bold;
+        color: #dc3545;
+        display: block;
+        line-height: 1;
+    }
+
+    .error-message h1 {
+        font-size: 2rem;
+        color: #343a40;
+        margin-bottom: 1rem;
+    }
+
+    .error-description {
+        font-size: 1.1rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+
+    .error-details {
+        font-size: 0.9rem;
+        color: #868e96;
+        margin-bottom: 2rem;
+    }
+
+    .error-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .error-actions .btn-primary,
+    .error-actions .btn-secondary {
+        min-width: 150px;
+    }
+
+    @media (max-width: 480px) {
+        .error-code {
+            font-size: 4rem;
+        }
+
+        .error-message h1 {
+            font-size: 1.5rem;
+        }
+
+        .error-actions {
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+</style>
