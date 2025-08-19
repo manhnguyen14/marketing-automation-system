@@ -3,7 +3,6 @@ class Customer {
         this.customerId = data.customer_id || null;
         this.email = data.email || '';
         this.name = data.name || '';
-        this.company = data.company || '';
         this.status = data.status || 'active';
         this.topicsOfInterest = data.topics_of_interest || [];
         this.createdAt = data.created_at || null;
@@ -42,10 +41,6 @@ class Customer {
             errors.push('Invalid email format');
         }
 
-        if (!this.name || this.name.trim().length === 0) {
-            errors.push('Name is required');
-        }
-
         if (!['active', 'inactive', 'blacklisted'].includes(this.status)) {
             errors.push('Status must be active, inactive, or blacklisted');
         }
@@ -62,7 +57,6 @@ class Customer {
             customer_id: this.customerId,
             email: this.email,
             name: this.name,
-            company: this.company,
             status: this.status,
             topics_of_interest: this.topicsOfInterest,
             created_at: this.createdAt,
@@ -75,7 +69,6 @@ class Customer {
             customerId: this.customerId,
             email: this.email,
             name: this.name,
-            company: this.company,
             status: this.status,
             topicsOfInterest: this.topicsOfInterest,
             createdAt: this.createdAt,
@@ -104,7 +97,7 @@ class Customer {
     // Update method
     update(updateData) {
         // Only update allowed fields
-        const allowedFields = ['name', 'company', 'status', 'topics_of_interest'];
+        const allowedFields = ['email', 'name', 'status', 'topics_of_interest'];
 
         Object.keys(updateData).forEach(key => {
             if (allowedFields.includes(key)) {

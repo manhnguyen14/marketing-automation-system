@@ -58,7 +58,6 @@ async function showDatabaseStatus() {
             console.log('\n📈 Data Statistics:');
             console.log(`   Customers: ${systemStats.customers}`);
             console.log(`   Books: ${systemStats.books}`);
-            console.log(`   Reading activities: ${systemStats.activities}`);
         }
 
         console.log('\n✅ Database status check completed');

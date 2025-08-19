@@ -23,7 +23,6 @@ async function resetDatabase() {
     console.log('This will permanently delete ALL data in the database!');
     console.log('- All customers will be removed');
     console.log('- All books will be removed');
-    console.log('- All reading activities will be removed');
     console.log('- All email records will be removed');
     console.log('- All jobs will be removed');
     console.log('- Migration history will be reset');

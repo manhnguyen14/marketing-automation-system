@@ -4,14 +4,12 @@ const migrationRunner = require('./migrationRunner');
 // Models
 const Customer = require('./models/Customer');
 const Book = require('./models/Book');
-const ReadingActivity = require('./models/ReadingActivity');
 const Job = require('./models/Job');
 const EmailRecord = require('./models/EmailRecord');
 
 // Services
 const customerService = require('./services/customerService');
 const bookService = require('./services/bookService');
-const activityService = require('./services/activityService');
 
 class Database {
     constructor() {
@@ -34,7 +32,6 @@ class Database {
             // Initialize services with connection
             await customerService.initialize();
             await bookService.initialize();
-            await activityService.initialize();
 
             // Run migrations
             await migrationRunner.runMigrations();
@@ -98,19 +95,11 @@ class Database {
         return bookService;
     }
 
-    get activities() {
-        if (!activityService.getPool()) {
-            activityService.initialize();
-        }
-        return activityService;
-    }
-
     // Model access
     get models() {
         return {
             Customer,
             Book,
-            ReadingActivity,
             Job,
             EmailRecord
         };
@@ -126,19 +115,16 @@ class Database {
             const [
                 customerCount,
                 bookCount,
-                activityCount,
                 migrationStatus
             ] = await Promise.all([
                 this.customers.getCustomerCount(),
                 this.books.getBookCount(),
-                this.activities.getActivityCount(),
                 migrationRunner.getMigrationStatus()
             ]);
 
             return {
                 customers: customerCount,
                 books: bookCount,
-                activities: activityCount,
                 migrations: migrationStatus,
                 connectionStatus: await this.testConnection()
             };
@@ -158,12 +144,10 @@ module.exports.migrationRunner = migrationRunner;
 module.exports.models = {
     Customer,
     Book,
-    ReadingActivity,
     Job,
     EmailRecord
 };
 module.exports.services = {
     customerService,
-    bookService,
-    activityService
+    bookService
 };

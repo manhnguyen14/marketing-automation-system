@@ -8,6 +8,7 @@ class MigrationRunner {
     }
 
     async runMigrations() {
+        console.log('🔄 Running database migrations...');
         const pool = connection.getPool();
         if (!pool) {
             throw new Error('Database connection not available');
@@ -24,6 +25,7 @@ class MigrationRunner {
 
             // Run each migration
             for (const migrationFile of migrationFiles) {
+                console.log(`Looping to run migration: ${migrationFile}`);
                 await this.runMigration(migrationFile);
             }
 
@@ -35,6 +37,7 @@ class MigrationRunner {
     }
 
     async ensureSchemaMigrationsTable() {
+        console.log('Checking schema migrations table...');
         const pool = connection.getPool();
         const migrationPath = path.join(this.migrationsPath, '000_create_schema_migrations.sql');
 
@@ -56,6 +59,7 @@ class MigrationRunner {
     }
 
     getMigrationFiles() {
+        console.log('Getting migration files...');
         if (!fs.existsSync(this.migrationsPath)) {
             console.log('No migrations directory found');
             return [];
@@ -180,7 +184,6 @@ class MigrationRunner {
 
             // Drop tables in reverse dependency order
             await client.query('DROP TABLE IF EXISTS email_records CASCADE');
-            await client.query('DROP TABLE IF EXISTS reading_activities CASCADE');
             await client.query('DROP TABLE IF EXISTS jobs CASCADE');
             await client.query('DROP TABLE IF EXISTS books CASCADE');
             await client.query('DROP TABLE IF EXISTS customers CASCADE');

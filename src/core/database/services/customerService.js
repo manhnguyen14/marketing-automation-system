@@ -25,15 +25,14 @@ class CustomerService {
         const customer = Customer.create(customerData);
 
         const query = `
-      INSERT INTO customers (email, name, company, status, topics_of_interest)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO customers (email, name, status, topics_of_interest)
+      VALUES ($1, $2, $3, $4)
       RETURNING *
     `;
 
         const values = [
             customer.email,
             customer.name,
-            customer.company,
             customer.status,
             customer.topicsOfInterest
         ];
@@ -64,15 +63,14 @@ class CustomerService {
                     const customer = Customer.create(customerData);
 
                     const query = `
-            INSERT INTO customers (email, name, company, status, topics_of_interest)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO customers (email, name, status, topics_of_interest)
+            VALUES ($1, $2, $3, $4)
             RETURNING customer_id
           `;
 
                     const values = [
                         customer.email,
                         customer.name,
-                        customer.company,
                         customer.status,
                         customer.topicsOfInterest
                     ];
@@ -131,7 +129,7 @@ class CustomerService {
         const pool = this.getPool();
         if (!pool) throw new Error('Database not available');
 
-        const { limit = 50, offset = 0, status, company } = options;
+        const { limit = 50, offset = 0, status } = options;
 
         let query = 'SELECT * FROM customers';
         const conditions = [];
@@ -144,11 +142,6 @@ class CustomerService {
             values.push(status);
         }
 
-        if (company) {
-            paramCount++;
-            conditions.push(`company ILIKE $${paramCount}`);
-            values.push(`%${company}%`);
-        }
 
         if (conditions.length > 0) {
             query += ' WHERE ' + conditions.join(' AND ');
@@ -161,11 +154,16 @@ class CustomerService {
         return result.rows.map(row => Customer.fromDatabaseRow(row));
     }
 
+    async getCustomers(options = {}) {
+        // Alias for getAllCustomers to maintain compatibility
+        return this.getAllCustomers(options);
+    }
+
     async getActiveCustomers(filters = {}) {
         const pool = this.getPool();
         if (!pool) throw new Error('Database not available');
 
-        const { topics, company, limit = 100, offset = 0 } = filters;
+        const { topics, limit = 100, offset = 0 } = filters;
 
         let query = `SELECT * FROM customers WHERE status = 'active'`;
         const values = [];
@@ -175,12 +173,6 @@ class CustomerService {
             paramCount++;
             query += ` AND topics_of_interest && $${paramCount}`;
             values.push(topics);
-        }
-
-        if (company) {
-            paramCount++;
-            query += ` AND company ILIKE $${paramCount}`;
-            values.push(`%${company}%`);
         }
 
         query += ` ORDER BY created_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
@@ -205,62 +197,6 @@ class CustomerService {
         return result.rows.map(row => Customer.fromDatabaseRow(row));
     }
 
-    async getCustomersForTargeting(criteria) {
-        const pool = this.getPool();
-        if (!pool) throw new Error('Database not available');
-
-        const {
-            topics,
-            companies,
-            excludeRecentEmails = true,
-            emailDaysAgo = 7,
-            limit = 1000
-        } = criteria;
-
-        let query = `
-      SELECT DISTINCT c.* FROM customers c
-      WHERE c.status = 'active'
-    `;
-
-        const conditions = [];
-        const values = [];
-        let paramCount = 0;
-
-        if (topics && topics.length > 0) {
-            paramCount++;
-            conditions.push(`c.topics_of_interest && $${paramCount}`);
-            values.push(topics);
-        }
-
-        if (companies && companies.length > 0) {
-            paramCount++;
-            conditions.push(`c.company = ANY($${paramCount})`);
-            values.push(companies);
-        }
-
-        if (excludeRecentEmails) {
-            paramCount++;
-            conditions.push(`
-        NOT EXISTS (
-          SELECT 1 FROM email_records er 
-          WHERE er.recipient_id = c.customer_id 
-          AND er.sent_at > NOW() - INTERVAL '$${paramCount} days'
-        )
-      `);
-            values.push(emailDaysAgo);
-        }
-
-        if (conditions.length > 0) {
-            query += ' AND ' + conditions.join(' AND ');
-        }
-
-        query += ` ORDER BY c.created_at DESC LIMIT $${paramCount + 1}`;
-        values.push(limit);
-
-        const result = await pool.query(query, values);
-        return result.rows.map(row => Customer.fromDatabaseRow(row));
-    }
-
     // Update operations
     async updateCustomer(customerId, updateData) {
         const pool = this.getPool();
@@ -275,64 +211,35 @@ class CustomerService {
 
         const query = `
       UPDATE customers 
-      SET name = $1, company = $2, status = $3, topics_of_interest = $4, updated_at = NOW()
+      SET email = $1, name = $2, status = $3, topics_of_interest = $4, updated_at = NOW()
       WHERE customer_id = $5
       RETURNING *
     `;
 
         const values = [
+            customer.email,    // ✅ Add email update
             customer.name,
-            customer.company,
             customer.status,
             customer.topicsOfInterest,
             customerId
         ];
 
-        const result = await pool.query(query, values);
-        return Customer.fromDatabaseRow(result.rows[0]);
-    }
-
-    async updateCustomerStatus(customerId, status) {
-        const pool = this.getPool();
-        if (!pool) throw new Error('Database not available');
-
-        const query = `
-      UPDATE customers 
-      SET status = $1, updated_at = NOW()
-      WHERE customer_id = $2
-      RETURNING *
-    `;
-
-        const result = await pool.query(query, [status, customerId]);
-
-        if (result.rows.length === 0) {
-            throw new Error('Customer not found');
+        try {
+            const result = await pool.query(query, values);
+            return Customer.fromDatabaseRow(result.rows[0]);
+        } catch (error) {
+            if (error.code === '23505') { // Unique violation
+                throw new Error('Email already exists for another customer');
+            }
+            throw error;
         }
-
-        return Customer.fromDatabaseRow(result.rows[0]);
     }
-
-    // Delete operations
-    async deleteCustomer(customerId) {
-        const pool = this.getPool();
-        if (!pool) throw new Error('Database not available');
-
-        const query = 'DELETE FROM customers WHERE customer_id = $1 RETURNING *';
-        const result = await pool.query(query, [customerId]);
-
-        if (result.rows.length === 0) {
-            throw new Error('Customer not found');
-        }
-
-        return Customer.fromDatabaseRow(result.rows[0]);
-    }
-
-    // Analytics and reporting
+// Analytics and reporting
     async getCustomerCount(filters = {}) {
         const pool = this.getPool();
         if (!pool) throw new Error('Database not available');
 
-        const { status, company } = filters;
+        const { status } = filters;
 
         let query = 'SELECT COUNT(*) as count FROM customers';
         const conditions = [];
@@ -345,34 +252,12 @@ class CustomerService {
             values.push(status);
         }
 
-        if (company) {
-            paramCount++;
-            conditions.push(`company ILIKE $${paramCount}`);
-            values.push(`%${company}%`);
-        }
-
         if (conditions.length > 0) {
             query += ' WHERE ' + conditions.join(' AND ');
         }
 
         const result = await pool.query(query, values);
         return parseInt(result.rows[0].count);
-    }
-
-    async getCustomersByCompany() {
-        const pool = this.getPool();
-        if (!pool) throw new Error('Database not available');
-
-        const query = `
-      SELECT company, COUNT(*) as customer_count
-      FROM customers 
-      WHERE company IS NOT NULL AND company != ''
-      GROUP BY company
-      ORDER BY customer_count DESC
-    `;
-
-        const result = await pool.query(query);
-        return result.rows;
     }
 
     async getCustomersByStatus() {
@@ -399,7 +284,6 @@ class CustomerService {
       SELECT * FROM customers 
       WHERE name ILIKE $1 
       OR email ILIKE $1 
-      OR company ILIKE $1
       ORDER BY 
         CASE WHEN email ILIKE $1 THEN 1 ELSE 2 END,
         name

@@ -35,6 +35,17 @@ module.exports = {
         acquireTimeout: parseInt(process.env.DB_ACQUIRE_TIMEOUT) || 30000,
         ssl: process.env.NODE_ENV === 'production' // Enable SSL in production
     },
+    // Data import configuration
+    dataImport: {
+        maxFileSize: parseInt(process.env.IMPORT_MAX_FILE_SIZE) || 2097152, // 2MB default
+        maxFileSizeMB: ((parseInt(process.env.IMPORT_MAX_FILE_SIZE) || 2097152) / 1024 / 1024).toFixed(1),
+        batchSize: parseInt(process.env.IMPORT_BATCH_SIZE) || 100,
+        timeoutMinutes: parseInt(process.env.IMPORT_TIMEOUT_MINUTES) || 10,
+        allowedFormats: ['.csv'],
+        allowedMimeTypes: ['text/csv', 'application/csv', 'text/plain'],
+        supportedModes: ['add', 'update'],
+        supportedFields: ['email', 'name', 'status', 'topics_of_interest']
+    },
     external: {
         postmarkToken: process.env.POSTMARK_TOKEN,
         geminiApiKey: process.env.GEMINI_API_KEY

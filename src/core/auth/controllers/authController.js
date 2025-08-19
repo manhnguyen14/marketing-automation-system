@@ -5,6 +5,7 @@ const authService = require('../services/authService');
  * POST /api/auth/login
  */
 const login = (req, res) => {
+    console.log('Controller layer - Login attempt');
     try {
         const { username, password } = req.body;
 
@@ -61,6 +62,7 @@ const login = (req, res) => {
  * GET /api/auth/logout
  */
 const logout = (req, res) => {
+    console.log('Controller layer - Logout attempt');
     try {
         // Clear the authentication cookie
         res.clearCookie('auth_token');
@@ -81,6 +83,7 @@ const logout = (req, res) => {
  * GET /api/auth/verify
  */
 const verify = (req, res) => {
+    console.log('Controller layer - Verify attempt');
     try {
         const token = req.cookies.auth_token;
 

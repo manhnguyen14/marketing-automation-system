@@ -104,9 +104,8 @@ npm run dev           # Development server with auto-reload
 
 The system includes comprehensive data models:
 
-- **Customers**: Marketing targets with interests and company information
+- **Customers**: Marketing targets with interests information
 - **Books**: Ebook catalog with topics and metadata
-- **Reading Activities**: Customer behavior tracking (started, progress, completed)
 - **Jobs**: Scheduled task management (ready for email automation)
 - **Email Records**: Campaign tracking and analytics (ready for integration)
 
@@ -182,7 +181,7 @@ npm run db:seed
 
 The system tracks marketing-relevant customer data:
 - Email address (unique identifier)
-- Name and company for personalization
+- Name for personalization
 - Topics of interest for content targeting
 - Status (active, inactive, blacklisted)
 - Reading behavior and engagement history
