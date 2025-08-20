@@ -435,6 +435,24 @@ class BookService {
         const result = await pool.query(query, values);
         return result.rows.map(row => Book.fromDatabaseRow(row));
     }
+    
+    async getBookByTitleAndAuthor(title, author) {
+        const pool = this.getPool();
+        if (!pool) throw new Error('Database not available');
+
+        const query = `
+            SELECT * FROM books 
+            WHERE LOWER(title) = LOWER($1) AND LOWER(author) = LOWER($2)
+        `;
+
+        const result = await pool.query(query, [title, author]);
+
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        return Book.fromDatabaseRow(result.rows[0]);
+    }
 }
 
 module.exports = new BookService();

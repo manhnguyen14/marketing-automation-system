@@ -1,6 +1,7 @@
 const mime = require('mime-types');
 const csvValidator = require('../validators/csvValidator');
-const dataValidator = require('../validators/dataValidator');
+const genericValidator = require('../validators/genericValidator');
+const importConfigs = require('../config/importConfigs');
 
 class DataValidationService {
     constructor() {
@@ -62,10 +63,22 @@ class DataValidationService {
     }
 
     /**
-     * Validate import mode parameter
+     * Validate import mode parameter for entity
      */
-    validateImportMode(mode) {
-        const validModes = ['add_customer', 'update_customer'];
+    validateImportMode(mode, entityName) {
+        if (!entityName) {
+            return {
+                isValid: false,
+                error: 'Entity name is required'
+            };
+        }
+
+        if (!importConfigs.hasEntity(entityName)) {
+            return {
+                isValid: false,
+                error: `Invalid entity: ${entityName}. Available entities: ${importConfigs.getAvailableEntities().join(', ')}`
+            };
+        }
 
         if (!mode) {
             return {
@@ -74,23 +87,30 @@ class DataValidationService {
             };
         }
 
-        if (!validModes.includes(mode.toLowerCase())) {
+        // Normalize mode format
+        const normalizedMode = mode.startsWith('add_') || mode.startsWith('update_')
+            ? mode
+            : `${mode}_${entityName}`;
+
+        const validModes = [`add_${entityName}`, `update_${entityName}`];
+
+        if (!validModes.includes(normalizedMode)) {
             return {
                 isValid: false,
-                error: `Invalid import mode: ${mode}. Must be 'add_customer' or 'update_customer'`
+                error: `Invalid import mode: ${mode}. Must be 'add_${entityName}' or 'update_${entityName}'`
             };
         }
 
         return {
             isValid: true,
-            normalizedMode: mode.toLowerCase()
+            normalizedMode: normalizedMode
         };
     }
 
     /**
-     * Comprehensive file validation (Stages 1-2)
+     * Comprehensive file validation for entity import (Stages 1-2)
      */
-    async validateFileForImport(file, importMode) {
+    async validateFileForImport(file, importMode, entityName) {
         // Stage 1: File upload validation
         const fileValidation = this.validateUploadedFile(file);
         if (!fileValidation.isValid) {
@@ -102,8 +122,8 @@ class DataValidationService {
             };
         }
 
-        // Validate import mode
-        const modeValidation = this.validateImportMode(importMode);
+        // Validate entity and import mode
+        const modeValidation = this.validateImportMode(importMode, entityName);
         if (!modeValidation.isValid) {
             return {
                 success: false,
@@ -113,11 +133,15 @@ class DataValidationService {
             };
         }
 
+        // Get entity configuration
+        const config = importConfigs.getConfig(entityName);
+
         // Stage 2: CSV structure validation
         try {
             const structureValidation = await csvValidator.validateCSVStructure(
                 file.buffer,
-                modeValidation.normalizedMode
+                modeValidation.normalizedMode,
+                config
             );
 
             if (!structureValidation.isValid) {
@@ -133,6 +157,8 @@ class DataValidationService {
                 success: true,
                 fileInfo: fileValidation.fileInfo,
                 importMode: modeValidation.normalizedMode,
+                entityName: entityName,
+                config: config,
                 message: 'File validation successful'
             };
 
@@ -149,8 +175,9 @@ class DataValidationService {
     /**
      * Validate CSV data preview (first few rows for user confirmation)
      */
-    async validateDataPreview(fileBuffer, importMode, previewRows = 5) {
+    async validateDataPreview(fileBuffer, entityName, importMode, previewRows = 5) {
         try {
+            const config = importConfigs.getConfig(entityName);
             const csv = require('csv-parser');
             const { Readable } = require('stream');
 
@@ -180,14 +207,15 @@ class DataValidationService {
 
             // Validate preview rows
             const previewValidation = [];
-            const existingEmails = new Set();
+            const uniqueFieldTracker = new Set();
 
             for (let i = 0; i < rows.length; i++) {
-                const rowValidation = await dataValidator.validateRowData(
+                const rowValidation = await genericValidator.validateRowData(
                     rows[i],
                     i + 2, // +2 for 1-based and header row
                     importMode,
-                    existingEmails
+                    entityName,
+                    uniqueFieldTracker
                 );
 
                 previewValidation.push({
@@ -196,11 +224,6 @@ class DataValidationService {
                     isValid: rowValidation.isValid,
                     errors: rowValidation.errors
                 });
-
-                // Track emails for duplicate detection
-                if (rowValidation.trimmedData.email) {
-                    existingEmails.add(rowValidation.trimmedData.email.toLowerCase());
-                }
             }
 
             return {
@@ -208,7 +231,9 @@ class DataValidationService {
                 headers,
                 previewRows: previewValidation,
                 totalRows: rows.length,
-                hasErrors: previewValidation.some(row => !row.isValid)
+                hasErrors: previewValidation.some(row => !row.isValid),
+                entityName: entityName,
+                importMode: importMode
             };
 
         } catch (error) {
@@ -267,6 +292,7 @@ class DataValidationService {
             message: validationResult.message,
             fileInfo: validationResult.fileInfo,
             importMode: validationResult.importMode,
+            entityName: validationResult.entityName,
             canProceed: true
         };
     }
@@ -313,6 +339,30 @@ class DataValidationService {
         } catch (error) {
             return { isValid: false, error: `Content validation failed: ${error.message}` };
         }
+    }
+
+    /**
+     * Get entity-specific validation configuration
+     */
+    getEntityValidationConfig(entityName) {
+        if (!importConfigs.hasEntity(entityName)) {
+            throw new Error(`Entity '${entityName}' not found`);
+        }
+
+        const config = importConfigs.getConfig(entityName);
+
+        return {
+            entityName: entityName,
+            entityDisplayName: config.entityName.charAt(0).toUpperCase() + config.entityName.slice(1),
+            allowedFields: config.allowedFields,
+            requiredFields: config.requiredFields,
+            fieldValidations: config.fieldValidations,
+            uniqueFields: config.uniqueFields,
+            maxFileSize: this.maxFileSize,
+            maxFileSizeMB: (this.maxFileSize / 1024 / 1024).toFixed(1),
+            allowedExtensions: this.allowedExtensions,
+            allowedMimeTypes: this.allowedMimeTypes
+        };
     }
 }
 

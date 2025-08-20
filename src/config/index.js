@@ -43,8 +43,7 @@ module.exports = {
         timeoutMinutes: parseInt(process.env.IMPORT_TIMEOUT_MINUTES) || 10,
         allowedFormats: ['.csv'],
         allowedMimeTypes: ['text/csv', 'application/csv', 'text/plain'],
-        supportedModes: ['add_customer', 'update_customer'],
-        supportedFields: ['email', 'name', 'status', 'topics_of_interest']
+        supportedEntities: ['customers', 'books'] // Add new entities here
     },
     external: {
         postmarkToken: process.env.POSTMARK_TOKEN,

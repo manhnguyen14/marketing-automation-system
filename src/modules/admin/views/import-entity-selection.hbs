@@ -1,0 +1,317 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1>Data Import</h1>
+        <p>Select the type of data you want to import from CSV files</p>
+    </div>
+
+    <div class="page-content">
+        {{!-- Flash Messages --}}
+        {{#if successMessage}}
+            <div class="alert alert-success">
+                {{successMessage}}
+            </div>
+        {{/if}}
+
+        {{#if errorMessage}}
+            <div class="alert alert-error">
+                {{errorMessage}}
+            </div>
+        {{/if}}
+
+        {{!-- Entity Selection Grid --}}
+        <div class="entity-selection-grid">
+            {{#each entities}}
+                <div class="entity-card">
+                    <div class="entity-card-header">
+                        <div class="entity-icon">
+                            {{#if (eq name "customers")}}📧{{else if (eq name "books")}}📚{{else}}📊{{/if}}
+                        </div>
+                        <h3 class="entity-title">{{displayName}}</h3>
+                    </div>
+
+                    <div class="entity-card-content">
+                        <p class="entity-description">{{description}}</p>
+
+                        <div class="entity-fields">
+                            <div class="field-group">
+                                <strong>Required for Add:</strong>
+                                <span class="field-list">{{#each requiredFields.add}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</span>
+                            </div>
+                            <div class="field-group">
+                                <strong>Required for Update:</strong>
+                                <span class="field-list">{{#each requiredFields.update}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</span>
+                            </div>
+                            <div class="field-group">
+                                <strong>All Fields:</strong>
+                                <span class="field-list">{{#each allowedFields}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="entity-card-actions">
+                        <a href="/admin/import/{{name}}" class="btn btn-primary full-width">
+                            Import {{displayName}} Data
+                        </a>
+                    </div>
+                </div>
+            {{/each}}
+        </div>
+
+        {{!-- Quick Info Section --}}
+        <div class="import-info-section">
+            <h3>Import Process Overview</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-icon">📄</div>
+                    <div class="info-content">
+                        <h4>File Format</h4>
+                        <p>CSV files only, UTF-8 encoding recommended. Maximum file size: 2MB.</p>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">✅</div>
+                    <div class="info-content">
+                        <h4>Validation</h4>
+                        <p>3-stage validation: file format, CSV structure, and data validation with detailed error reporting.</p>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">🔄</div>
+                    <div class="info-content">
+                        <h4>Processing</h4>
+                        <p>Batch processing with partial import support. Failed records are reported with specific error details.</p>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">📊</div>
+                    <div class="info-content">
+                        <h4>Templates</h4>
+                        <p>Download CSV templates for each entity type to ensure proper formatting and required fields.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{!-- System Status --}}
+        <div class="system-status-section">
+            <h3>System Status</h3>
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-label">Available Entities:</span>
+                    <span class="status-value">{{entities.length}}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Import System:</span>
+                    <span class="status-value status-ok">✅ Ready</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">File Upload:</span>
+                    <span class="status-value status-ok">✅ Available</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Data Validation:</span>
+                    <span class="status-value status-ok">✅ Active</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .entity-selection-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 2rem;
+        margin: 2rem 0;
+    }
+
+    .entity-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .entity-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .entity-card-header {
+        display: flex;
+        align-items: center;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .entity-icon {
+        font-size: 2rem;
+        margin-right: 1rem;
+    }
+
+    .entity-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .entity-card-content {
+        padding: 1.5rem;
+    }
+
+    .entity-description {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+    }
+
+    .entity-fields {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+        padding: 1rem;
+    }
+
+    .field-group {
+        margin-bottom: 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    .field-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .field-group strong {
+        color: #495057;
+        display: inline-block;
+        min-width: 140px;
+    }
+
+    .field-list {
+        font-family: monospace;
+        color: #6c757d;
+        background: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 3px;
+        border: 1px solid #dee2e6;
+    }
+
+    .entity-card-actions {
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .import-info-section {
+        margin: 3rem 0;
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+
+    .import-info-section h3 {
+        margin-top: 0;
+        color: #495057;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 1rem;
+        background: white;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+    }
+
+    .info-icon {
+        font-size: 1.5rem;
+        margin-right: 1rem;
+        margin-top: 0.25rem;
+    }
+
+    .info-content h4 {
+        margin: 0 0 0.5rem 0;
+        color: #495057;
+        font-size: 1rem;
+    }
+
+    .info-content p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 0.875rem;
+        line-height: 1.4;
+    }
+
+    .system-status-section {
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+    }
+
+    .system-status-section h3 {
+        margin-top: 0;
+        color: #495057;
+        margin-bottom: 1.5rem;
+    }
+
+    .status-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+        border: 1px solid #e9ecef;
+    }
+
+    .status-label {
+        font-weight: 500;
+        color: #495057;
+    }
+
+    .status-value {
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .status-ok {
+        color: #28a745;
+    }
+
+    @media (max-width: 768px) {
+        .entity-selection-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .status-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

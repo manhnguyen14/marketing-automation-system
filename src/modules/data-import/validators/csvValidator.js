@@ -8,9 +8,9 @@ class CSVValidator {
 
     /**
      * Validate CSV file structure and format
-     * Stage 1-2 validation (fatal errors)
+     * Stage 1-2 validation (fatal errors) - now supports entity configuration
      */
-    async validateCSVStructure(fileBuffer, importMode) {
+    async validateCSVStructure(fileBuffer, importMode, config) {
         this.errors = [];
 
         try {
@@ -46,8 +46,8 @@ class CSVValidator {
             // Trim headers and convert to lowercase for comparison
             const cleanHeaders = headers.map(h => h.trim().toLowerCase());
 
-            // Validate required headers based on import mode
-            const validationResult = this.validateHeaders(cleanHeaders, importMode);
+            // Validate required headers based on entity configuration and import mode
+            const validationResult = this.validateHeaders(cleanHeaders, importMode, config);
             if (!validationResult.isValid) {
                 this.errors.push(...validationResult.errors);
                 return { isValid: false, errors: this.errors };
@@ -69,28 +69,23 @@ class CSVValidator {
     }
 
     /**
-     * Validate required headers based on import mode
+     * Validate required headers based on entity configuration and import mode
      */
-    validateHeaders(headers, importMode) {
+    validateHeaders(headers, importMode, config) {
         const errors = [];
 
-        // Define allowed headers
-        const allowedHeaders = ['email', 'name', 'status', 'topics_of_interest'];
+        // Extract mode type (add or update) and entity name
+        const modeType = importMode.startsWith('add_') ? 'add' : 'update';
 
-        if (importMode === 'update_customer') {
-            allowedHeaders.push('customer_id');
-        }
-
-        // Check for required headers
-        if (importMode === 'add_customer') {
-            if (!headers.includes('email')) {
-                errors.push('Missing required header: email (required for Add New Records mode)');
+        // Check for required headers based on import mode
+        const requiredHeaders = config.requiredFields[modeType];
+        requiredHeaders.forEach(requiredHeader => {
+            if (!headers.includes(requiredHeader.toLowerCase())) {
+                const entityName = config.entityName;
+                const modeLabel = modeType === 'add' ? 'Add New Records' : 'Update Existing Records';
+                errors.push(`Missing required header: ${requiredHeader} (required for ${modeLabel} mode for ${entityName})`);
             }
-        } else if (importMode === 'update_customer') {
-            if (!headers.includes('customer_id')) {
-                errors.push('Missing required header: customer_id (required for Update Existing Records mode)');
-            }
-        }
+        });
 
         // Check for duplicate headers
         const headerCounts = {};
@@ -104,10 +99,12 @@ class CSVValidator {
             }
         });
 
-        // Check for invalid headers
-        headers.forEach(header => {
+        // Check for invalid headers (not in allowed fields)
+        const allowedHeaders = config.allowedFields.map(field => field.toLowerCase());
+        headers.forEach((header, index) => {
             if (header && !allowedHeaders.includes(header)) {
-                errors.push(`Invalid header: ${header}. Allowed headers: ${allowedHeaders.join(', ')}`);
+                const validHeaders = config.allowedFields.join(', ');
+                errors.push(`Invalid header: ${header}. Allowed headers for ${config.entityName}: ${validHeaders}`);
             }
         });
 

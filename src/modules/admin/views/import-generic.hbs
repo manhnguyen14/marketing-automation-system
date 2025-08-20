@@ -1,0 +1,359 @@
+<div class="page-container">
+    <div class="page-header import">
+        <h1>{{config.entityDisplayName}} Data Import</h1>
+        <p>Import {{config.entity}} data from CSV files with validation and error reporting</p>
+    </div>
+
+    <div class="page-content">
+        {{!-- Flash Messages --}}
+        {{#if successMessage}}
+            <div class="alert alert-success">
+                {{successMessage}}
+            </div>
+        {{/if}}
+
+        {{#if errorMessage}}
+            <div class="alert alert-error">
+                {{errorMessage}}
+            </div>
+        {{/if}}
+
+        {{!-- Import Status --}}
+        {{#if importStatus}}
+            <div class="import-status importing">
+                <div class="import-spinner"></div>
+                <strong>Import in progress...</strong>
+                <p>Please wait while your CSV file is being processed. Do not close this page.</p>
+            </div>
+        {{/if}}
+
+        {{!-- Import Form --}}
+        {{#unless importStatus}}
+            <form action="/admin/import/{{config.entity}}/upload" method="POST" enctype="multipart/form-data" id="importForm">
+                {{!-- Step 1: Import Mode Selection --}}
+                <div class="import-section">
+                    <h3>Step 1: Select Import Mode</h3>
+                    <div class="mode-selection">
+                        {{#each config.importModes}}
+                            <div class="mode-option" data-mode="{{this.value}}">
+                                <input type="radio" name="mode" value="{{this.value}}" id="mode-{{@index}}" class="mode-radio" required>
+                                <label for="mode-{{@index}}">
+                                    <div class="mode-title">{{this.label}}</div>
+                                    <div class="mode-description">{{this.description}}</div>
+                                </label>
+                            </div>
+                        {{/each}}
+                    </div>
+                </div>
+
+                {{!-- Step 2: File Upload --}}
+                <div class="import-section">
+                    <h3>Step 2: Upload CSV File</h3>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <div class="file-upload-icon">📄</div>
+                        <div class="file-upload-text">Click to select CSV file or drag and drop</div>
+                        <div class="file-upload-hint">Maximum file size: {{config.maxFileSizeMB}}MB</div>
+                        <input type="file" name="file" id="fileInput" class="file-input" accept=".csv" required>
+                    </div>
+
+                    <div id="fileInfo" class="file-info" style="display: none;">
+                        <div class="file-info-item">
+                            <span class="file-info-label">File Name:</span>
+                            <span class="file-info-value" id="fileName"></span>
+                        </div>
+                        <div class="file-info-item">
+                            <span class="file-info-label">File Size:</span>
+                            <span class="file-info-value" id="fileSize"></span>
+                        </div>
+                        <div class="file-info-item">
+                            <span class="file-info-label">File Type:</span>
+                            <span class="file-info-value" id="fileType"></span>
+                        </div>
+                    </div>
+                </div>
+
+                {{!-- Step 3: Submit --}}
+                <div class="import-section">
+                    <h3>Step 3: Start Import</h3>
+                    <button type="submit" class="btn btn-success full-width" id="submitBtn" disabled>
+                        Start {{config.entityDisplayName}} Import Process
+                    </button>
+                </div>
+            </form>
+        {{/unless}}
+
+        {{!-- Templates Section --}}
+        <div class="import-section">
+            <h3>CSV Templates</h3>
+            <p class="card-description">Download template files to ensure proper CSV format:</p>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-content">
+                        <div class="template-icon">📝</div>
+                        <div class="template-title">Add New {{config.entityDisplayName}}s Template</div>
+                        <div class="template-description">Template for importing new {{config.entity}} records with required fields</div>
+                        <div class="template-fields">
+                            <strong>Required:</strong> {{#each config.requiredFields.add}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+                        </div>
+                        <a href="/admin/import/{{config.entity}}/template?format=add" class="btn btn-secondary full-width">
+                            Download Add Template
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-content">
+                        <div class="template-icon">✏️</div>
+                        <div class="template-title">Update {{config.entityDisplayName}}s Template</div>
+                        <div class="template-description">Template for updating existing {{config.entity}} records</div>
+                        <div class="template-fields">
+                            <strong>Required:</strong> {{#each config.requiredFields.update}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+                        </div>
+                        <a href="/admin/import/{{config.entity}}/template?format=update" class="btn btn-secondary full-width">
+                            Download Update Template
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{!-- Field Information --}}
+        <div class="import-section">
+            <h3>Supported Fields</h3>
+            <div class="field-info-grid">
+                {{#each config.allowedFields}}
+                    <div class="field-info-item">
+                        <span class="field-name">{{this}}</span>
+                        <span class="field-type">
+                            {{#if (isRequired this ../config.requiredFields.add)}}
+                                <span class="required-badge">Required (Add)</span>
+                            {{/if}}
+                            {{#if (isRequired this ../config.requiredFields.update)}}
+                                <span class="required-badge">Required (Update)</span>
+                            {{/if}}
+                        </span>
+                    </div>
+                {{/each}}
+            </div>
+        </div>
+
+        {{!-- Configuration Information --}}
+        <div class="import-section">
+            <h3>Import Configuration</h3>
+            <div class="grid grid-4">
+                <div class="config-item">
+                    <div class="config-label">Max File Size</div>
+                    <div class="config-value">{{config.maxFileSizeMB}}MB</div>
+                </div>
+                <div class="config-item">
+                    <div class="config-label">Allowed Formats</div>
+                    <div class="config-value">CSV only</div>
+                </div>
+                <div class="config-item">
+                    <div class="config-label">Batch Size</div>
+                    <div class="config-value">{{config.batchSize}} records</div>
+                </div>
+                <div class="config-item">
+                    <div class="config-label">Entity Type</div>
+                    <div class="config-value">{{config.entityDisplayName}}</div>
+                </div>
+            </div>
+        </div>
+
+        {{!-- Error Report Section --}}
+        {{#if errorReport}}
+            <div class="import-section">
+                <h3>Error Report Available</h3>
+                <p>The following errors occurred during import. You can download the detailed report or clear it.</p>
+
+                <div class="error-report-actions">
+                    <a href="/admin/import/{{config.entity}}/error-report" class="btn btn-secondary">View Detailed Report</a>
+                    <form action="/admin/import/{{config.entity}}/clear-report" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-outline">Clear Report</button>
+                    </form>
+                </div>
+            </div>
+        {{/if}}
+
+        {{!-- Navigation Back --}}
+        <div class="import-section">
+            <a href="/admin/import" class="btn btn-outline">← Back to Entity Selection</a>
+        </div>
+    </div>
+</div>
+
+{{!-- JavaScript for Import Interface --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileUploadArea = document.getElementById('fileUploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const submitBtn = document.getElementById('submitBtn');
+        const importForm = document.getElementById('importForm');
+        const modeOptions = document.querySelectorAll('.mode-option');
+        const modeRadios = document.querySelectorAll('.mode-radio');
+
+        // File upload handling
+        fileUploadArea.addEventListener('click', () => fileInput.click());
+
+        fileUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.add('dragover');
+        });
+
+        fileUploadArea.addEventListener('dragleave', () => {
+            fileUploadArea.classList.remove('dragover');
+        });
+
+        fileUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect();
+            }
+        });
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (file) {
+                // Validate file type
+                if (!file.name.toLowerCase().endsWith('.csv')) {
+                    alert('Please select a CSV file (.csv extension required)');
+                    fileInput.value = '';
+                    return;
+                }
+
+                // Validate file size
+                if (file.size > {{config.maxFileSize}}) {
+                    alert('File size exceeds {{config.maxFileSizeMB}}MB limit. Please choose a smaller file.');
+                    fileInput.value = '';
+                    return;
+                }
+
+                // Update UI
+                fileUploadArea.classList.add('selected');
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileSize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+                document.getElementById('fileType').textContent = file.type || 'text/csv';
+                fileInfo.style.display = 'block';
+
+                // Update upload area text
+                fileUploadArea.querySelector('.file-upload-text').textContent = 'File selected: ' + file.name;
+
+                checkFormValid();
+            }
+        }
+
+        // Mode selection handling
+        modeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const mode = option.dataset.mode;
+                const radioIndex = Array.from(modeOptions).indexOf(option);
+                const radio = document.getElementById('mode-' + radioIndex);
+                radio.checked = true;
+
+                // Update UI
+                modeOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+
+                checkFormValid();
+            });
+        });
+
+        modeRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                modeOptions.forEach(opt => opt.classList.remove('selected'));
+                const selectedIndex = Array.from(modeRadios).indexOf(radio);
+                modeOptions[selectedIndex].classList.add('selected');
+                checkFormValid();
+            });
+        });
+
+        function checkFormValid() {
+            const modeSelected = document.querySelector('input[name="mode"]:checked');
+            const fileSelected = fileInput.files.length > 0;
+
+            submitBtn.disabled = !(modeSelected && fileSelected);
+        }
+
+        // Form submission handling
+        importForm.addEventListener('submit', function(e) {
+            const entityName = '{{config.entityDisplayName}}';
+            if (!confirm(`Are you sure you want to start the ${entityName} import process? This action cannot be undone.`)) {
+                e.preventDefault();
+                return;
+            }
+
+            // Disable form and show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+
+            // Show loading message
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'import-status importing';
+            loadingDiv.innerHTML = `
+                <div class="import-spinner"></div>
+                <strong>Starting ${entityName} import process...</strong>
+                <p>Please wait while your CSV file is being processed.</p>
+            `;
+            importForm.parentNode.insertBefore(loadingDiv, importForm);
+            importForm.style.display = 'none';
+        });
+    });
+
+    // Handlebars helper for checking if field is required
+    function isRequired(field, requiredFields) {
+        return requiredFields && requiredFields.includes(field);
+    }
+</script>
+
+<style>
+    .field-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .field-info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+        border: 1px solid #e9ecef;
+    }
+
+    .field-name {
+        font-family: monospace;
+        font-weight: 500;
+        color: #495057;
+    }
+
+    .required-badge {
+        background: #dc3545;
+        color: white;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 3px;
+        margin-left: 0.5rem;
+    }
+
+    .template-fields {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin: 0.5rem 0;
+    }
+
+    .error-report-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+</style>

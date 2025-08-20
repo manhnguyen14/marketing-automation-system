@@ -327,34 +327,42 @@ class FileValidatorMiddleware {
     }
 
     /**
-     * Validate import mode parameter
+     * Validate import mode parameter for any entity
      */
     validateImportMode(req, res, next) {
         try {
             const { mode } = req.body;
-            const validModes = ['add_customer', 'update_customer'];
+            const { entity } = req.params; // Get entity from route parameter
 
             if (!mode) {
                 return this.sendValidationError(
                     req, res,
                     'MISSING_MODE',
                     'Import mode required',
-                    'Please select import mode (Add New Records or Update Existing Records)'
+                    'Please select import mode (Add or Update)'
                 );
             }
 
-            if (!validModes.includes(mode.toLowerCase())) {
+            // Normalize mode format to include entity
+            let normalizedMode = mode;
+            if (entity && !mode.includes('_')) {
+                normalizedMode = `${mode}_${entity}`;
+            }
+
+            const validModePatterns = ['add_', 'update_'];
+            const isValidMode = validModePatterns.some(pattern => normalizedMode.startsWith(pattern));
+
+            if (!isValidMode) {
                 return this.sendValidationError(
                     req, res,
                     'INVALID_MODE',
                     'Invalid import mode',
-                    `Import mode must be 'add_customer' or 'update_customer', received: ${mode}`
+                    `Import mode must start with 'add' or 'update'${entity ? ` for ${entity}` : ''}`
                 );
             }
 
-            // Normalize mode to lowercase
-            req.body.mode = mode.toLowerCase();
-
+            // Store normalized mode
+            req.body.mode = normalizedMode;
             next();
 
         } catch (error) {

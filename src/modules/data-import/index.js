@@ -1,24 +1,26 @@
 /**
  * Data Import Module
  *
- * Handles CSV file import functionality for customer data
- * Supports both "add new records" and "update existing records" operations
- * with comprehensive validation and partial import capabilities.
+ * Generic CSV file import functionality for any entity type
+ * Supports dynamic entity configuration with comprehensive validation
  */
 
+// Configuration
+const importConfigs = require('./config/importConfigs');
+
 // Controllers
-const importController = require('./controllers/importController');
+const genericImportController = require('./controllers/genericImportController');
 
 // Services
-const csvImportService = require('./services/csvImportService');
+const genericImportService = require('./services/genericImportService');
 const dataValidationService = require('./services/dataValidationService');
 
 // Validators
 const csvValidator = require('./validators/csvValidator');
-const dataValidator = require('./validators/dataValidator');
+const genericValidator = require('./validators/genericValidator');
 
 // Routes
-const routes = require('./routes');
+const genericRoutes = require('./routes/genericRoutes');
 
 /**
  * Data Import Module Class
@@ -36,11 +38,15 @@ class DataImportModule {
             // Validate environment configuration
             this.validateConfiguration();
 
+            // Validate all entity configurations
+            this.validateEntityConfigurations();
+
             // Initialize services if needed
             await this.initializeServices();
 
             this.initialized = true;
             console.log('📁 Data Import Module: Initialized successfully');
+            console.log(`   - Supported entities: ${importConfigs.getAvailableEntities().join(', ')}`);
 
             return true;
         } catch (error) {
@@ -77,10 +83,22 @@ class DataImportModule {
             throw new Error('Invalid IMPORT_TIMEOUT_MINUTES configuration');
         }
 
-        console.log('📁 Data Import Module: Configuration validated');
+        console.log('📁 Data Import Module: Environment configuration validated');
         console.log(`   - Max file size: ${(maxFileSize / 1024 / 1024).toFixed(1)}MB`);
         console.log(`   - Batch size: ${batchSize} records`);
         console.log(`   - Timeout: ${timeout} minutes`);
+    }
+
+    /**
+     * Validate all entity configurations
+     */
+    validateEntityConfigurations() {
+        try {
+            importConfigs.validateAllConfigs();
+            console.log('📁 Data Import Module: Entity configurations validated');
+        } catch (error) {
+            throw new Error(`Entity configuration validation failed: ${error.message}`);
+        }
     }
 
     /**
@@ -96,6 +114,17 @@ class DataImportModule {
      * Get module status and configuration
      */
     getStatus() {
+        const entities = importConfigs.getAvailableEntities();
+        const entityDetails = entities.map(entity => {
+            const config = importConfigs.getConfig(entity);
+            return {
+                name: entity,
+                displayName: config.entityName.charAt(0).toUpperCase() + config.entityName.slice(1),
+                allowedFields: config.allowedFields,
+                requiredFields: config.requiredFields
+            };
+        });
+
         return {
             module: 'data-import',
             initialized: this.initialized,
@@ -105,17 +134,18 @@ class DataImportModule {
                 batch_size: parseInt(process.env.IMPORT_BATCH_SIZE) || 100,
                 timeout_minutes: parseInt(process.env.IMPORT_TIMEOUT_MINUTES) || 10,
                 supported_formats: ['csv'],
-                supported_modes: ['add_customer', 'update_customer'],
-                supported_fields: ['email', 'name', 'status', 'topics_of_interest']
+                supported_entities: entities
             },
+            entities: entityDetails,
             services: {
-                csv_import: 'ready',
+                generic_import: 'ready',
                 data_validation: 'ready',
-                csv_validator: 'ready',
-                data_validator: 'ready'
+                generic_validator: 'ready',
+                csv_validator: 'ready'
             },
             import_status: {
-                in_progress: csvImportService.isImportInProgress()
+                in_progress: genericImportService.isImportInProgress(),
+                current_entity: genericImportService.getCurrentEntity()
             }
         };
     }
@@ -127,36 +157,70 @@ class DataImportModule {
         if (!this.initialized) {
             throw new Error('Data Import Module not initialized');
         }
-        return routes;
+
+        return genericRoutes;
     }
 
     /**
-     * Get module controllers (for testing or direct access)
+     * Get module controllers
      */
     getControllers() {
         return {
-            import: importController
+            genericImport: genericImportController
         };
     }
 
     /**
-     * Get module services (for testing or direct access)
+     * Get module services
      */
     getServices() {
         return {
-            csvImport: csvImportService,
+            genericImport: genericImportService,
             dataValidation: dataValidationService
         };
     }
 
     /**
-     * Get module validators (for testing or direct access)
+     * Get module validators
      */
     getValidators() {
         return {
             csv: csvValidator,
-            data: dataValidator
+            generic: genericValidator
         };
+    }
+
+    /**
+     * Get entity configurations
+     */
+    getEntityConfigs() {
+        return importConfigs;
+    }
+
+    /**
+     * Add new entity configuration
+     */
+    addEntityConfig(entityName, config) {
+        if (!this.initialized) {
+            throw new Error('Data Import Module not initialized');
+        }
+
+        // Validate the new configuration
+        const requiredProperties = [
+            'entityName', 'tableName', 'primaryKey', 'serviceName',
+            'requiredFields', 'allowedFields', 'fieldValidations', 'templates'
+        ];
+
+        const missing = requiredProperties.filter(prop => !config[prop]);
+        if (missing.length > 0) {
+            throw new Error(`Invalid configuration for ${entityName}. Missing: ${missing.join(', ')}`);
+        }
+
+        // Add to configurations
+        importConfigs.configs[entityName] = config;
+
+        console.log(`📁 Data Import Module: Added entity configuration for '${entityName}'`);
+        return true;
     }
 
     /**
@@ -165,8 +229,8 @@ class DataImportModule {
     async shutdown() {
         try {
             // Reset any in-progress imports
-            if (csvImportService.isImportInProgress()) {
-                csvImportService.resetProgress();
+            if (genericImportService.isImportInProgress()) {
+                genericImportService.resetProgress();
                 console.log('📁 Data Import Module: Reset in-progress import');
             }
 
@@ -184,7 +248,43 @@ class DataImportModule {
      * Check if module is healthy
      */
     isHealthy() {
-        return this.initialized;
+        if (!this.initialized) {
+            return false;
+        }
+
+        try {
+            // Validate configurations are still valid
+            importConfigs.validateAllConfigs();
+            return true;
+        } catch (error) {
+            console.error('❌ Data Import Module: Health check failed:', error.message);
+            return false;
+        }
+    }
+
+    /**
+     * Get entity-specific import capabilities
+     */
+    getEntityCapabilities(entityName) {
+        if (!importConfigs.hasEntity(entityName)) {
+            throw new Error(`Entity '${entityName}' not found`);
+        }
+
+        const config = importConfigs.getConfig(entityName);
+
+        return {
+            entity: entityName,
+            displayName: config.entityName.charAt(0).toUpperCase() + config.entityName.slice(1),
+            supportedModes: [`add_${entityName}`, `update_${entityName}`],
+            requiredFields: config.requiredFields,
+            allowedFields: config.allowedFields,
+            uniqueFields: config.uniqueFields,
+            fieldValidations: config.fieldValidations,
+            templates: config.templates,
+            serviceName: config.serviceName,
+            tableName: config.tableName,
+            primaryKey: config.primaryKey
+        };
     }
 }
 
@@ -196,26 +296,31 @@ module.exports = {
     // Main module instance
     module: dataImportModule,
 
+    // Configuration
+    configs: importConfigs,
+
     // Direct component access
     controllers: {
-        import: importController
+        genericImport: genericImportController
     },
 
     services: {
-        csvImport: csvImportService,
+        genericImport: genericImportService,
         dataValidation: dataValidationService
     },
 
     validators: {
         csv: csvValidator,
-        data: dataValidator
+        generic: genericValidator
     },
 
-    routes,
+    routes: genericRoutes,
 
     // Convenience exports
     initialize: () => dataImportModule.initialize(),
     getRoutes: () => dataImportModule.getRoutes(),
     getStatus: () => dataImportModule.getStatus(),
-    shutdown: () => dataImportModule.shutdown()
+    shutdown: () => dataImportModule.shutdown(),
+    isHealthy: () => dataImportModule.isHealthy(),
+    getEntityCapabilities: (entityName) => dataImportModule.getEntityCapabilities(entityName)
 };
