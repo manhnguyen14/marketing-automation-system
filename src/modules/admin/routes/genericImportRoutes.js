@@ -34,7 +34,7 @@ function validateEntity(req, res, next) {
 
     if (!importConfigs.hasEntity(entity)) {
         const availableEntities = importConfigs.getAvailableEntities();
-        req.session.errorMessage = `Entity '${entity}' is not supported. Available entities: ${availableEntities.join(', ')}`;
+        req.session.errorMessage = `3. Entity '${entity}' is not supported. Available entities: ${availableEntities.join(', ')}`;
         return res.redirect('/admin/import');
     }
 
@@ -50,7 +50,7 @@ function validateImportMode(req, res, next) {
 
     if (!mode) {
         req.session.errorMessage = 'Please select an import mode.';
-        return res.redirect(`/admin/import/${entity}`);
+        return res.redirect(`/admin/import-data/${entity}`);
     }
 
     // Normalize mode format
@@ -62,7 +62,7 @@ function validateImportMode(req, res, next) {
 
     if (!validModes.includes(normalizedMode)) {
         req.session.errorMessage = `Invalid import mode for ${entity}. Must be 'add' or 'update'.`;
-        return res.redirect(`/admin/import/${entity}`);
+        return res.redirect(`/admin/import-data/${entity}`);
     }
 
     // Store normalized mode for controller
@@ -148,7 +148,7 @@ router.use((error, req, res, next) => {
         }
 
         // Redirect to appropriate page
-        const redirectPath = entity ? `/admin/import/${entity}` : '/admin/import';
+        const redirectPath = entity ? `/admin/import-data/${entity}` : '/admin/import';
         return res.redirect(redirectPath);
     }
 

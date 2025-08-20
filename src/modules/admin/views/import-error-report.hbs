@@ -1,9 +1,4 @@
 <div class="page-container">
-    <div class="page-header">
-        <h1>Import Error Report</h1>
-        <p>Detailed error information from the CSV import process</p>
-    </div>
-
     <div class="page-content">
         <div class="error-report-section">
             <h3>Error Details</h3>
@@ -11,8 +6,8 @@
         </div>
 
         <div class="error-report-actions" style="margin-top: 20px;">
-            <a href="/admin/import/customers" class="btn btn-primary">Back to Import</a>
-            <form action="/admin/import/customers/clear-report" method="POST" style="display: inline;">
+            <a href="/admin/import-data/{{entity}}" class="btn btn-primary">Back to {{entityDisplayName}} Import</a>
+            <form action="/admin/import-data/{{entity}}/clear-report" method="POST" style="display: inline;">
                 <button type="submit" class="btn btn-outline">Clear Report</button>
             </form>
         </div>

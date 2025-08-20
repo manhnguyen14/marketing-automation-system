@@ -22,7 +22,7 @@ router.get('/dashboard', authMiddleware.requireAuth, dashboardController.showDas
  * Import Navigation Routes
  */
 
-// Main import page - redirect to generic import selection
+// Import redirect to generic import system
 router.get('/import', authMiddleware.requireAuth, (req, res) => {
     res.redirect('/admin/import-data');
 });

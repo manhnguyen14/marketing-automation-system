@@ -18,7 +18,7 @@ class GenericImportController {
                 return res.status(400).json({
                     success: false,
                     error: 'Invalid entity type',
-                    message: `Entity '${entity}' is not supported. Available entities: ${importConfigs.getAvailableEntities().join(', ')}`
+                    message: `2. Entity '${entity}' is not supported. Available entities: ${importConfigs.getAvailableEntities().join(', ')}`
                 });
             }
 

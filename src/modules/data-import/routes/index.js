@@ -3,7 +3,6 @@ const multer = require('multer');
 const authMiddleware = require('../../../core/auth/middleware/authMiddleware');
 const fileUpload = require('../../../shared/middleware/fileUpload');
 const fileValidator = require('../../../shared/middleware/fileValidator');
-const importController = require('../controllers/importController');
 
 const router = express.Router();
 
@@ -29,34 +28,6 @@ const upload = multer({
         }
     }
 });
-
-/**
- * Customer import routes
- */
-
-// Upload and import CSV file
-router.post('/customers/upload',
-    upload.single('file'),
-    fileValidator.validateCSVFile,
-    importController.uploadCustomerCSV
-);
-
-// Validate CSV file without importing (preview)
-router.post('/customers/validate',
-    upload.single('file'),
-    fileValidator.validateCSVFile,
-    importController.validateCSVFile
-);
-
-// Get import configuration and limits
-router.get('/customers/config',
-    importController.getImportConfig
-);
-
-// Get import template
-router.get('/customers/template',
-    importController.getImportTemplate
-);
 
 /**
  * Error handling middleware for multer

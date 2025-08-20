@@ -48,7 +48,7 @@ function validateEntity(req, res, next) {
         return res.status(400).json({
             success: false,
             error: 'Invalid entity type',
-            message: `Entity '${entity}' is not supported. Available entities: ${availableEntities.join(', ')}`
+            message: `1. Entity '${entity}' is not supported. Available entities: ${availableEntities.join(', ')}`
         });
     }
 

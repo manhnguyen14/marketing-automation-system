@@ -207,6 +207,11 @@ app.engine('hbs', engine({
         // Default value helper
         default: function(value, defaultValue) {
             return value || defaultValue;
+        },
+
+        // ✅ ADD: isRequired helper for generic import forms
+        isRequired: function(field, requiredFields) {
+            return requiredFields && requiredFields.includes(field);
         }
     }
 }));
@@ -250,7 +255,17 @@ async function initializeApplication() {
             console.log('⚠️  Database: Not available (running in limited mode)');
         }
 
-        // 2. Initialize data import module
+        // 2. Initialize admin module
+        console.log('🎨 Initializing admin module...');
+        const adminInitialized = await adminModule.initialize();
+
+        if (adminInitialized) {
+            console.log('🎨 Admin Module: Initialized successfully');
+        } else {
+            console.log('⚠️  Admin Module: Initialization failed');
+        }
+
+        // 3. Initialize data import module
         console.log('📁 Initializing data import module...');
         const importInitialized = await dataImportModule.initialize();
 
@@ -260,7 +275,7 @@ async function initializeApplication() {
             console.log('⚠️  Data Import Module: Initialization failed (will retry on first use)');
         }
 
-        // 3. Setup routes after initialization
+        // 4. Setup routes after initialization
         console.log('🛣️  Setting up routes...');
 
         // Health check endpoint (enhanced with database status)
@@ -311,8 +326,9 @@ async function initializeApplication() {
             console.log('🛣️  Data import API routes: ⚠️ Fallback configured');
         }
 
-        // Admin interface routes
-        app.use('/admin', adminModule.routes);
+        // ✅ UPDATE: Admin interface routes - add generic import routes
+        app.use('/admin/import-data', adminModule.getRoutes().genericImport);
+        app.use('/admin', adminModule.getRoutes().main);
         console.log('🛣️  Admin interface routes: ✅ Configured');
 
         // Default redirects
@@ -340,7 +356,7 @@ async function startServer() {
         const server = app.listen(config.port, () => {
             console.log(`📡 Server running on: http://localhost:${config.port}`);
             console.log(`🔐 Admin login: http://localhost:${config.port}/admin/login`);
-            console.log(`📁 Data Import: http://localhost:${config.port}/admin/import/customers`);
+            console.log(`📁 Data Import: http://localhost:${config.port}/admin/import-data`);
             console.log(`💡 Health check: http://localhost:${config.port}/api/health`);
             console.log('='.repeat(50));
             console.log(`Environment: ${config.nodeEnv}`);

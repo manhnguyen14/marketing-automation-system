@@ -62,7 +62,7 @@ const customerConfig = {
     templates: {
         add: {
             headers: ['email', 'name', 'status', 'topics_of_interest'],
-            exampleRow: ['user@example.com', 'John Doe', 'active', 'technology,business'],
+            exampleRow: ['user@example.com', 'John Doe', 'active', '"technology,business"'],
             instructions: [
                 'Email is required and must be unique',
                 'Status must be "active" or "inactive"',
@@ -71,7 +71,7 @@ const customerConfig = {
         },
         update: {
             headers: ['customer_id', 'email', 'name', 'status', 'topics_of_interest'],
-            exampleRow: ['1', 'updated@example.com', 'Updated Name', 'inactive', 'technology,marketing'],
+            exampleRow: ['1', 'updated@example.com', 'Updated Name', 'inactive', '"technology,marketing"'],
             instructions: [
                 'Customer ID is required and must exist in database',
                 'Only provide fields you want to update',
@@ -141,16 +141,16 @@ const bookConfig = {
     templates: {
         add: {
             headers: ['title', 'author', 'genre', 'topics', 'status'],
-            exampleRow: ['The Future of Technology', 'Dr. Sarah Tech', 'Technology', 'technology,ai,future', 'published'],
+            exampleRow: ['The Future of Technology', 'Dr. Sarah Tech', 'Technology', '"technology,ai,future"', 'published'],
             instructions: [
                 'Title and author are required',
-                'Status must be "draft", "published", or "archived"',
+                'Status must be "draft" or "published" or "archived"',
                 'Topics should be comma-separated without quotes'
             ]
         },
         update: {
             headers: ['book_id', 'title', 'author', 'genre', 'topics', 'status'],
-            exampleRow: ['1', 'Updated Title', 'Updated Author', 'Science', 'science,research', 'published'],
+            exampleRow: ['1', 'Updated Title', 'Updated Author', 'Science', '"science,research"', 'published'],
             instructions: [
                 'Book ID is required and must exist in database',
                 'Title and author combination must be unique if changed',
@@ -164,8 +164,8 @@ const bookConfig = {
 class ImportConfigRegistry {
     constructor() {
         this.configs = {
-            customers: customerConfig,
-            books: bookConfig
+            customer: customerConfig,
+            book: bookConfig
         };
     }
 

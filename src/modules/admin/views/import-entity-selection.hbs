@@ -1,5 +1,5 @@
 <div class="page-container">
-    <div class="page-header">
+    <div class="page-header import">
         <h1>Data Import</h1>
         <p>Select the type of data you want to import from CSV files</p>
     </div>
@@ -23,9 +23,6 @@
             {{#each entities}}
                 <div class="entity-card">
                     <div class="entity-card-header">
-                        <div class="entity-icon">
-                            {{#if (eq name "customers")}}📧{{else if (eq name "books")}}📚{{else}}📊{{/if}}
-                        </div>
                         <h3 class="entity-title">{{displayName}}</h3>
                     </div>
 
@@ -49,7 +46,7 @@
                     </div>
 
                     <div class="entity-card-actions">
-                        <a href="/admin/import/{{name}}" class="btn btn-primary full-width">
+                        <a href="/admin/import-data/{{name}}" class="btn btn-primary full-width">
                             Import {{displayName}} Data
                         </a>
                     </div>

@@ -3,9 +3,18 @@ const dataValidationService = require('../../data-import/services/dataValidation
 const importConfigs = require('../../data-import/config/importConfigs');
 
 class GenericImportUIController {
+    constructor() {
+        this.renderEntityImportPage = this.renderEntityImportPage.bind(this);
+        this.handleEntityFileUpload = this.handleEntityFileUpload.bind(this);
+        this.downloadEntityTemplate = this.downloadEntityTemplate.bind(this);
+        this.showEntityErrorReport = this.showEntityErrorReport.bind(this);
+        this.clearEntityErrorReport = this.clearEntityErrorReport.bind(this);
+        this.getEntityImportStatus = this.getEntityImportStatus.bind(this);
+        this.renderEntitySelectionPage = this.renderEntitySelectionPage.bind(this);
+    }
     /**
      * Render entity import interface
-     * GET /admin/import/:entity
+     * GET /admin/import-data/:entity
      */
     async renderEntityImportPage(req, res) {
         try {
@@ -79,7 +88,7 @@ class GenericImportUIController {
 
     /**
      * Handle CSV file upload from admin interface
-     * POST /admin/import/:entity/upload
+     * POST /admin/import-data/:entity/upload
      */
     async handleEntityFileUpload(req, res) {
         try {
@@ -96,18 +105,18 @@ class GenericImportUIController {
             // Validate request
             if (!file) {
                 req.session.errorMessage = 'Please select a CSV file to upload.';
-                return res.redirect(`/admin/import/${entity}`);
+                return res.redirect(`/admin/import-data/${entity}`);
             }
 
             if (!mode) {
                 req.session.errorMessage = 'Please select an import mode.';
-                return res.redirect(`/admin/import/${entity}`);
+                return res.redirect(`/admin/import-data/${entity}`);
             }
 
             // Check if import is already in progress
             if (genericImportService.isImportInProgress()) {
                 req.session.errorMessage = 'An import operation is already in progress. Please wait for it to complete.';
-                return res.redirect(`/admin/import/${entity}`);
+                return res.redirect(`/admin/import-data/${entity}`);
             }
 
             // Normalize mode
@@ -120,7 +129,7 @@ class GenericImportUIController {
 
             if (!fileValidation.success) {
                 req.session.errorMessage = `File validation failed: ${fileValidation.errors.join('; ')}`;
-                return res.redirect(`/admin/import/${entity}`);
+                return res.redirect(`/admin/import-data/${entity}`);
             }
 
             // Start import process
@@ -147,19 +156,19 @@ class GenericImportUIController {
                 req.session.errorMessage = `Import failed: ${importResult.message || importResult.error}`;
             }
 
-            return res.redirect(`/admin/import/${entity}`);
+            return res.redirect(`/admin/import-data/${entity}`);
 
         } catch (error) {
             console.error('Entity file upload error:', error);
             const { entity } = req.params;
             req.session.errorMessage = 'An unexpected error occurred during import. Please try again.';
-            return res.redirect(`/admin/import/${entity}`);
+            return res.redirect(`/admin/import-data/${entity}`);
         }
     }
 
     /**
      * Download CSV template for entity
-     * GET /admin/import/:entity/template?format=add|update
+     * GET /admin/import-data/:entity/template?format=add|update
      */
     async downloadEntityTemplate(req, res) {
         try {
@@ -177,10 +186,11 @@ class GenericImportUIController {
 
             if (!validFormats.includes(format)) {
                 req.session.errorMessage = 'Invalid template format requested.';
-                return res.redirect(`/admin/import/${entity}`);
+                return res.redirect(`/admin/import-data/${entity}`);
             }
 
             // Generate template
+            console.log('Generating template for', entity, 'in', format, 'mode with config:', config.templates[format]);
             const template = this.generateTemplateCSV(config, format);
             const filename = `${entity}-import-template-${format}.csv`;
 
@@ -195,13 +205,13 @@ class GenericImportUIController {
             console.error('Entity template download error:', error);
             const { entity } = req.params;
             req.session.errorMessage = 'Unable to download template. Please try again.';
-            return res.redirect(`/admin/import/${entity}`);
+            return res.redirect(`/admin/import-data/${entity}`);
         }
     }
 
     /**
      * Show error report from session
-     * GET /admin/import/:entity/error-report
+     * GET /admin/import-data/:entity/error-report
      */
     async showEntityErrorReport(req, res) {
         try {
@@ -210,7 +220,7 @@ class GenericImportUIController {
 
             if (!errorReport) {
                 req.session.errorMessage = 'No error report available.';
-                return res.redirect(`/admin/import/${entity}`);
+                return res.redirect(`/admin/import-data/${entity}`);
             }
 
             const config = importConfigs.getConfig(entity);
@@ -227,32 +237,32 @@ class GenericImportUIController {
             console.error('Entity error report display error:', error);
             const { entity } = req.params;
             req.session.errorMessage = 'Unable to display error report.';
-            return res.redirect(`/admin/import/${entity}`);
+            return res.redirect(`/admin/import-data/${entity}`);
         }
     }
 
     /**
      * Clear error report from session
-     * POST /admin/import/:entity/clear-report
+     * POST /admin/import-data/:entity/clear-report
      */
     async clearEntityErrorReport(req, res) {
         try {
             const { entity } = req.params;
             delete req.session.errorReport;
             req.session.successMessage = 'Error report cleared.';
-            return res.redirect(`/admin/import/${entity}`);
+            return res.redirect(`/admin/import-data/${entity}`);
 
         } catch (error) {
             console.error('Clear entity report error:', error);
             const { entity } = req.params;
             req.session.errorMessage = 'Unable to clear error report.';
-            return res.redirect(`/admin/import/${entity}`);
+            return res.redirect(`/admin/import-data/${entity}`);
         }
     }
 
     /**
      * Get import status as JSON (for AJAX requests)
-     * GET /admin/import/:entity/status
+     * GET /admin/import-data/:entity/status
      */
     async getEntityImportStatus(req, res) {
         try {
@@ -328,6 +338,7 @@ class GenericImportUIController {
      * Generate CSV template content for entity
      */
     generateTemplateCSV(config, format) {
+        console.log('start function generateTemplateCSV');
         const templateConfig = config.templates[format];
         if (!templateConfig) {
             throw new Error(`Template format '${format}' not found for entity`);

@@ -314,7 +314,7 @@ class FileValidatorMiddleware {
         // For admin interface
         if (req.session) {
             req.session.errorMessage = userMessage;
-            const redirectUrl = req.get('Referer') || '/admin/import/customers';
+            const redirectUrl = req.get('Referer') || '/admin/import-data/customers';
             return res.redirect(redirectUrl);
         }
 

@@ -29,7 +29,7 @@
 
         {{!-- Import Form --}}
         {{#unless importStatus}}
-            <form action="/admin/import/{{config.entity}}/upload" method="POST" enctype="multipart/form-data" id="importForm">
+            <form action="/admin/import-data/{{config.entity}}/upload" method="POST" enctype="multipart/form-data" id="importForm">
                 {{!-- Step 1: Import Mode Selection --}}
                 <div class="import-section">
                     <h3>Step 1: Select Import Mode</h3>
@@ -96,7 +96,7 @@
                         <div class="template-fields">
                             <strong>Required:</strong> {{#each config.requiredFields.add}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
                         </div>
-                        <a href="/admin/import/{{config.entity}}/template?format=add" class="btn btn-secondary full-width">
+                        <a href="/admin/import-data/{{config.entity}}/template?format=add" class="btn btn-secondary full-width">
                             Download Add Template
                         </a>
                     </div>
@@ -110,7 +110,7 @@
                         <div class="template-fields">
                             <strong>Required:</strong> {{#each config.requiredFields.update}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
                         </div>
-                        <a href="/admin/import/{{config.entity}}/template?format=update" class="btn btn-secondary full-width">
+                        <a href="/admin/import-data/{{config.entity}}/template?format=update" class="btn btn-secondary full-width">
                             Download Update Template
                         </a>
                     </div>
@@ -168,8 +168,8 @@
                 <p>The following errors occurred during import. You can download the detailed report or clear it.</p>
 
                 <div class="error-report-actions">
-                    <a href="/admin/import/{{config.entity}}/error-report" class="btn btn-secondary">View Detailed Report</a>
-                    <form action="/admin/import/{{config.entity}}/clear-report" method="POST" style="display: inline;">
+                    <a href="/admin/import-data/{{config.entity}}/error-report" class="btn btn-secondary">View Detailed Report</a>
+                    <form action="/admin/import-data/{{config.entity}}/clear-report" method="POST" style="display: inline;">
                         <button type="submit" class="btn btn-outline">Clear Report</button>
                     </form>
                 </div>

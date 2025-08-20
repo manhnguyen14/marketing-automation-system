@@ -20,27 +20,19 @@
 - src/modules/admin/views/layouts/
 - src/modules/admin/routes/
 - src/modules/data-import/
+- src/modules/data-import/config/
 - src/modules/data-import/controllers/
 - src/modules/data-import/services/
 - src/modules/data-import/validators/
 - src/modules/data-import/routes/
 - src/shared/
 - src/shared/middleware/
-- src/shared/utils/
 - src/config/
 - public/
 - public/css/
+- public/images/
+- public/js/
 - scripts/
-- tests/
-- tests/unit/
-- tests/unit/core/
-- tests/unit/core/auth/
-- tests/unit/core/database/
-- tests/unit/modules/
-- tests/unit/modules/admin/
-- tests/unit/modules/data-import/
-- tests/integration/
-- tests/fixtures/
 
 ### files:
 - package.json
@@ -71,19 +63,25 @@
 - src/core/database/index.js
 - src/modules/admin/controllers/authUIController.js
 - src/modules/admin/controllers/dashboardController.js
-- src/modules/admin/controllers/importUIController.js
+- src/modules/admin/controllers/genericImportUIController.js
 - src/modules/admin/views/layouts/main.hbs
 - src/modules/admin/views/login.hbs
 - src/modules/admin/views/dashboard.hbs
 - src/modules/admin/views/error.hbs
+- src/modules/admin/views/import-entity-selection.hbs
+- src/modules/admin/views/import-error-report.hbs
+- src/modules/admin/views/import-generic.hbs
 - src/modules/admin/routes/index.js
+- src/modules/admin/routes/genericImportRoutes.js
 - src/modules/admin/index.js
-- src/modules/data-import/controllers/importController.js
-- src/modules/data-import/services/csvImportService.js
+- src/modules/data-import/config/importConfigs.js
+- src/modules/data-import/controllers/genericImportController.js
 - src/modules/data-import/services/dataValidationService.js
+- src/modules/data-import/services/genericImportService.js
 - src/modules/data-import/validators/csvValidator.js
-- src/modules/data-import/validators/dataValidator.js
+- src/modules/data-import/validators/genericValidator.js
 - src/modules/data-import/routes/index.js
+- src/modules/data-import/routes/genericRoutes.js
 - src/modules/data-import/index.js
 - src/shared/middleware/errorHandler.js
 - src/shared/middleware/fileUpload.js
@@ -93,24 +91,7 @@
 - scripts/db-status.js
 - scripts/db-reset.js
 - scripts/seed-data.js
-- tests/unit/core/auth/authService.test.js
-- tests/unit/core/auth/authController.test.js
-- tests/unit/core/auth/authMiddleware.test.js
-- tests/unit/core/database/customerService.test.js
-- tests/unit/core/database/models/Customer.test.js
-- tests/unit/modules/admin/authUIController.test.js
-- tests/unit/modules/admin/dashboardController.test.js
-- tests/unit/modules/data-import/csvImportService.test.js
-- tests/unit/modules/data-import/dataValidationService.test.js
-- tests/unit/modules/data-import/csvValidator.test.js
-- tests/integration/auth-flow.test.js
-- tests/integration/database-operations.test.js
-- tests/integration/admin-interface.test.js
-- tests/integration/api-endpoints.test.js
-- tests/integration/csv-import-flow.test.js
-- tests/fixtures/testData.js
-- tests/fixtures/mockUsers.json
-- tests/fixtures/sampleCustomers.json
+- scripts/setup.js
 
 ### file_purposes:
 - package.json: "Node.js project configuration with dependencies including PostgreSQL driver, multer, csv-parser, express-session"
@@ -137,19 +118,25 @@
 - src/core/database/index.js: "Database module exports and initialization coordination"
 - src/modules/admin/controllers/authUIController.js: "Login page rendering and UI logic (unchanged)"
 - src/modules/admin/controllers/dashboardController.js: "Admin dashboard rendering and data preparation (unchanged)"
-- src/modules/admin/controllers/importUIController.js: "Admin CSV import interface with file upload, template download, and session-based messaging"
+- src/modules/admin/controllers/genericImportUIController.js: "Generic import UI controller for handling entity selection and import forms"
 - src/modules/admin/views/layouts/main.hbs: "Base HTML template with navigation including Data Import link"
 - src/modules/admin/views/login.hbs: "Login form with client-side validation and error handling (unchanged)"
 - src/modules/admin/views/dashboard.hbs: "Admin dashboard with system status and feature overview (unchanged)"
 - src/modules/admin/views/error.hbs: "Error page template for HTTP errors and exceptions (unchanged)"
+- src/modules/admin/views/import-entity-selection.hbs: "Entity selection page for data import with grid of importable entities"
+- src/modules/admin/views/import-error-report.hbs: "Error report template for displaying import validation errors"
+- src/modules/admin/views/import-generic.hbs: "Generic import form for uploading and processing CSV files"
 - src/modules/admin/routes/index.js: "Admin interface URL routing with CSV import routes and file upload middleware"
+- src/modules/admin/routes/genericImportRoutes.js: "Routes for generic entity import functionality"
 - src/modules/admin/index.js: "Admin module exports aggregation (unchanged)"
-- src/modules/data-import/controllers/importController.js: "CSV import API endpoints with validation, template generation, and configuration"
-- src/modules/data-import/services/csvImportService.js: "Core CSV import processing with batch operations and partial import support"
+- src/modules/data-import/config/importConfigs.js: "Configuration for different entity import types and validation rules"
+- src/modules/data-import/controllers/genericImportController.js: "API controller for generic entity import operations"
 - src/modules/data-import/services/dataValidationService.js: "File validation, preview generation, and comprehensive data validation"
+- src/modules/data-import/services/genericImportService.js: "Service for processing and importing generic entity data"
 - src/modules/data-import/validators/csvValidator.js: "CSV file structure and header validation (Stages 1-2)"
-- src/modules/data-import/validators/dataValidator.js: "Row-by-row data validation with business logic checking (Stage 3)"
+- src/modules/data-import/validators/genericValidator.js: "Generic entity data validation with configurable rules"
 - src/modules/data-import/routes/index.js: "Data import API routes with authentication and file upload middleware"
+- src/modules/data-import/routes/genericRoutes.js: "API routes for generic entity import operations"
 - src/modules/data-import/index.js: "Data import module aggregation with initialization and status management"
 - src/shared/middleware/errorHandler.js: "Global error handling for API and web requests (unchanged)"
 - src/shared/middleware/fileUpload.js: "Multer configuration for CSV file uploads with security validation"
@@ -159,6 +146,7 @@
 - scripts/db-status.js: "Database connection and migration status checking script"
 - scripts/db-reset.js: "Database reset script with confirmation prompts"
 - scripts/seed-data.js: "Sample data generation script for development"
+- scripts/setup.js: "Project setup script for initial configuration and dependencies"
 
 ## MODULE_ARCHITECTURE
 
@@ -190,36 +178,41 @@
 - purpose: "CSV-based customer data import with comprehensive validation and partial import support"
 - characteristics: ["stage_based_validation", "partial_import_capability", "security_focused", "admin_integration"]
 
-### data_import_components:
-- src/modules/data-import/controllers/importController.js:
-  - primary_function: "CSV import API endpoints and template generation"
-  - key_responsibilities: ["file_upload_handling", "validation_orchestration", "template_generation", "configuration_endpoints"]
-  - dependencies: ["csvImportService", "dataValidationService"]
-  - used_by: ["API_clients", "admin_interface"]
-
-- src/modules/data-import/services/csvImportService.js:
-  - primary_function: "Core CSV processing with partial import support"
-  - key_responsibilities: ["csv_parsing", "batch_processing", "database_operations", "error_collection"]
-  - dependencies: ["dataValidator", "csvValidator", "core/database"]
-  - used_by: ["importController", "importUIController"]
+- src/modules/data-import/config/importConfigs.js:
+  - primary_function: "Entity import configuration and validation rules"
+  - key_responsibilities: ["entity_definition", "field_validation_rules", "import_mode_configuration", "error_message_templates"]
+  - dependencies: []
+  - used_by: ["genericImportController", "genericValidator", "genericImportService"]
 
 - src/modules/data-import/services/dataValidationService.js:
   - primary_function: "File validation and data preview generation"
   - key_responsibilities: ["file_format_validation", "preview_generation", "error_formatting", "configuration_validation"]
-  - dependencies: ["csvValidator", "dataValidator"]
-  - used_by: ["importController", "csvImportService"]
+  - dependencies: ["csvValidator", "genericValidator"]
+  - used_by: ["genericImportController", "genericImportService"]
+
+- src/modules/data-import/services/genericImportService.js:
+  - primary_function: "Generic entity import processing"
+  - key_responsibilities: ["data_transformation", "batch_processing", "error_handling", "import_reporting"]
+  - dependencies: ["dataValidationService", "csvValidator", "genericValidator", "importConfigs"]
+  - used_by: ["genericImportController"]
 
 - src/modules/data-import/validators/csvValidator.js:
   - primary_function: "CSV structure and header validation (Stages 1-2 - fatal errors)"
   - key_responsibilities: ["file_format_checking", "header_validation", "csv_structure_parsing", "encoding_validation"]
   - dependencies: ["csv-parser"]
-  - used_by: ["dataValidationService"]
+  - used_by: ["dataValidationService", "genericImportService"]
 
-- src/modules/data-import/validators/dataValidator.js:
-  - primary_function: "Row-by-row data validation (Stage 3 - partial import)"
-  - key_responsibilities: ["email_validation", "duplicate_detection", "field_validation", "error_report_generation"]
-  - dependencies: ["core/database"]
-  - used_by: ["csvImportService"]
+- src/modules/data-import/validators/genericValidator.js:
+  - primary_function: "Generic entity data validation (Stage 3 - row-level validation)"
+  - key_responsibilities: ["field_validation", "business_rule_checking", "data_type_conversion", "error_collection"]
+  - dependencies: ["importConfigs"]
+  - used_by: ["genericImportService", "dataValidationService"]
+
+- src/modules/data-import/controllers/genericImportController.js:
+  - primary_function: "API endpoints for generic entity import"
+  - key_responsibilities: ["request_handling", "file_processing", "response_formatting", "error_handling"]
+  - dependencies: ["genericImportService", "dataValidationService", "fileUpload", "fileValidator"]
+  - used_by: ["genericRoutes"]
 
 ### validation_stages:
 - stage_1_file_upload: "File format, size (2MB), and basic accessibility validation"
@@ -298,14 +291,14 @@
 - app_js_imports: ["config/index.js", "core/auth", "core/database", "modules/admin", "modules/data-import", "shared/middleware/errorHandler"]
 - core_auth_exports: ["authService", "authController", "authMiddleware"]
 - core_database_exports: ["connection", "models", "services", "migrationRunner", "initialize"]
-- modules_admin_exports: ["authUIController", "dashboardController", "importUIController", "routes"]
-- modules_data_import_exports: ["importController", "csvImportService", "dataValidationService", "validators", "routes"]
+- modules_admin_exports: ["authUIController", "dashboardController", "genericImportUIController", "routes"]
+- modules_data_import_exports: ["genericImportController", "genericImportService", "dataValidationService", "validators", "config", "routes"]
 
 ### module_communication:
 - admin_module_uses: ["core/auth for authentication", "core/database for data access", "shared/middleware for error handling", "data-import for import functionality"]
-- data_import_module_uses: ["core/auth for route protection", "core/database for customer operations", "shared/middleware for file handling"]
+- data_import_module_uses: ["core/auth for route protection", "core/database for entity operations", "shared/middleware for file handling"]
 - auth_module_provides: ["JWT token management", "route protection", "session handling"]
-- database_module_provides: ["data persistence", "customer management", "analytics queries", "migration system"]
+- database_module_provides: ["data persistence", "entity management", "analytics queries", "migration system"]
 - shared_middleware_provides: ["error handling", "file upload processing", "validation utilities"]
 
 ## ROUTE_ARCHITECTURE
@@ -317,10 +310,11 @@
   - GET /api/auth/logout: "Session termination and cookie clearing"
   - GET /api/auth/verify: "Token validation and user context retrieval"
 - data_import_routes:
-  - POST /api/data-import/customers/upload: "CSV file upload and import processing"
-  - POST /api/data-import/customers/validate: "CSV validation and preview without importing"
-  - GET /api/data-import/customers/config: "Import configuration and limits"
-  - GET /api/data-import/customers/template: "Download CSV templates"
+  - POST /api/data-import/:entity/upload: "CSV file upload and import processing for any entity"
+  - POST /api/data-import/:entity/validate: "CSV validation and preview without importing"
+  - GET /api/data-import/:entity/config: "Import configuration and limits for specific entity"
+  - GET /api/data-import/:entity/template: "Download CSV templates for specific entity"
+  - GET /api/data-import/entities: "Get list of available importable entities"
   - GET /api/data-import/health: "Data import module health check"
 - system_routes:
   - GET /api/health: "System health check with database connectivity status"
@@ -331,9 +325,11 @@
   - GET /admin/login: "Login page rendering (redirects if authenticated)"
 - protected_routes:
   - GET /admin/dashboard: "Main admin dashboard (requires authentication)"
-  - GET /admin/import/customers: "CSV import interface"
-  - POST /admin/import/customers/upload: "Handle CSV file upload from admin interface"
-  - GET /admin/import/customers/template: "Download CSV template files"
+  - GET /admin/import-data: "Entity selection page for data import"
+  - GET /admin/import-data/:entity: "Generic import interface for specific entity"
+  - POST /admin/import-data/:entity/upload: "Handle CSV file upload from admin interface"
+  - GET /admin/import-data/:entity/template: "Download CSV template files"
+  - GET /admin/import-data/:entity/error-report: "View error report for failed imports"
   - GET /admin/: "Redirects to dashboard"
 - root_routes:
   - GET /: "Redirects to admin dashboard"
@@ -342,28 +338,30 @@
 - public_routes: ["/api/auth/login", "/api/health", "/api/data-import/health"]
 - redirect_routes: ["/admin/login uses redirectIfAuthenticated"]
 - protected_routes: ["all /admin/* routes except login use requireAuth", "all /api/data-import/* routes use requireAuth"]
-- file_upload_routes: ["/admin/import/customers/upload uses multer", "/api/data-import/customers/upload uses fileUpload middleware"]
+- file_upload_routes: ["/admin/import-data/:entity/upload uses multer", "/api/data-import/:entity/upload uses fileUpload middleware"]
+- file_validation: ["all file upload routes use fileValidator for security and format validation"]
 - error_handling: ["global errorHandler for all routes", "multer error handling for file uploads"]
 
 ## DATA_FLOW_SEQUENCES
 
 ### csv_import_flow:
-1. user_request: "POST /admin/import/customers/upload with CSV file"
+1. user_request: "POST /admin/import-data/:entity/upload with CSV file"
 2. middleware_processing: "authMiddleware.requireAuth → multer file upload → fileValidator validation"
-3. stage_1_validation: "File format, size (2MB), and basic accessibility checking"
-4. stage_2_validation: "CSV structure, headers, and required columns validation"
-5. stage_3_processing: "Row-by-row data validation with partial import support"
-6. database_operations: "customerService.createCustomer() or updateCustomer() for valid records"
-7. result_generation: "Success summary + error report in original CSV format"
-8. response_delivery: "Session flash messages + redirect to import page"
+3. controller_handling: "genericImportUIController processes the request and calls appropriate services"
+4. stage_1_validation: "File format, size (2MB), and basic accessibility checking"
+5. stage_2_validation: "CSV structure, headers, and required columns validation based on entity configuration"
+6. stage_3_processing: "Row-by-row data validation with partial import support using entity-specific rules"
+7. database_operations: "Entity-specific service methods for creating or updating records"
+8. result_generation: "Success summary + error report in original CSV format"
+9. response_delivery: "Session flash messages + redirect to import page or error report"
 
 ### data_validation_stages:
 1. file_validation: "fileValidator.validateCSVFile() checks format and security"
-2. csv_structure: "csvValidator.validateCSVStructure() verifies headers and structure"
-3. data_processing: "dataValidator.validateRowData() with automatic whitespace trimming"
-4. business_logic: "Email uniqueness validation (only business logic rule)"
-5. database_operations: "Batch processing with 100 records per batch"
-6. error_collection: "Failed records collected in original CSV format with error column"
+2. csv_structure: "csvValidator.validateCSVStructure() verifies headers and structure against entity configuration"
+3. data_processing: "genericValidator.validateRowData() with automatic whitespace trimming and type conversion"
+4. business_logic: "Entity-specific validation rules from importConfigs.js"
+5. database_operations: "Batch processing with 100 records per batch using appropriate service methods"
+6. error_collection: "Failed records collected in original CSV format with error column and detailed messages"
 
 ### authentication_flow:
 1. user_request: "GET /admin/dashboard"
@@ -372,56 +370,13 @@
 4. route_access: "dashboardController.showDashboard renders page"
 5. template_render: "dashboard.hbs with user context and navigation including Data Import link"
 
-## TESTING_STRUCTURE
-
-### directories:
-- tests/unit/core/database: "Database model and service unit tests"
-- tests/unit/modules/admin: "Admin interface controller tests"
-- tests/unit/modules/data-import: "CSV import functionality unit tests"
-- tests/integration: "End-to-end workflow tests"
-- tests/fixtures: "Test data and mock objects"
-
-### test_coverage_areas:
-- csv_import_validation: "Stage 1-3 validation testing with various file types"
-- partial_import_scenarios: "Mixed valid/invalid data processing"
-- security_validation: "File upload security and malicious content detection"
-- database_operations: "Customer CRUD operations with import compatibility"
-- error_handling: "Comprehensive error scenario testing"
-- session_management: "Flash message and redirect testing"
-
-## EXTENSION_PATTERNS
-
-### adding_new_import_type:
-1. create_validator: "src/modules/data-import/validators/newTypeValidator.js"
-2. extend_service: "Add new import type support to csvImportService.js"
-3. update_controller: "Add new endpoints to importController.js"
-4. add_templates: "Create CSV templates for new data type"
-5. update_routes: "Register new import endpoints"
-6. add_admin_interface: "Create admin UI for new import type"
-
-### adding_new_validation_rule:
-1. update_dataValidator: "Add new validation method to dataValidator.js"
-2. integrate_validation: "Call validation in validateRowData() method"
-3. update_error_reporting: "Include new validation errors in CSV error report"
-4. add_configuration: "Add validation configuration to config/index.js"
-5. update_documentation: "Document new validation rule requirements"
-
-### adding_new_database_model:
-1. create_model_file: "src/core/database/models/NewModel.js"
-2. implement_validation: "business logic methods and data validation"
-3. create_migration: "src/core/database/migrations/006_create_new_table.sql"
-4. create_service: "src/core/database/services/newModelService.js"
-5. update_exports: "src/core/database/index.js includes new service"
-6. run_migration: "npm run db:migrate to apply schema changes"
-7. add_import_support: "Extend data-import module for new model if needed"
-
 ## FUTURE_INTEGRATION_POINTS
 
 ### email_campaign_module:
 - target_location: "src/modules/email/"
 - database_dependencies: ["customers for targeting", "email_records for tracking", "jobs for scheduling"]
 - core_dependencies: ["auth for protection", "database for persistence"]
-- data_import_integration: ["customer_data from CSV imports", "email_list_management"]
+- data_import_integration: ["entity data from generic import system", "email_list_management"]
 - new_tables: ["ai_content_review", "email_templates", "campaign_batches"]
 
 ### job_scheduler_core:
@@ -448,8 +403,8 @@
 ### data_validation_security:
 - input_sanitization: "Automatic whitespace trimming and data cleaning"
 - sql_injection_prevention: "Parameterized queries in all database operations"
-- email_validation: "RFC 5322 compliant email format checking"
-- duplicate_prevention: "Email uniqueness validation at database level"
+- field_validation: "Entity-specific validation rules from importConfigs.js"
+- duplicate_prevention: "Uniqueness validation at database level based on entity configuration"
 - error_information_leakage: "Sanitized error messages without sensitive data exposure"
 
 ### authentication_integration:

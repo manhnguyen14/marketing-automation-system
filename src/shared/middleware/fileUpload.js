@@ -153,7 +153,7 @@ class FileUploadMiddleware {
         // For admin interface, set flash message and redirect
         if (req.session) {
             req.session.errorMessage = userMessage;
-            return res.redirect(req.get('Referer') || '/admin/import/customers');
+            return res.redirect(req.get('Referer') || '/admin/import-data/customers');
         }
 
         // Fallback error response
