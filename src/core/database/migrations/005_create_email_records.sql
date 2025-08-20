@@ -1,7 +1,7 @@
 -- Create email_records table for campaign tracking
 CREATE TABLE IF NOT EXISTS email_records (
-                                             email_id SERIAL PRIMARY KEY,
-                                             job_id INTEGER REFERENCES jobs(job_id) ON DELETE SET NULL,
+    email_id SERIAL PRIMARY KEY,
+    job_id INTEGER REFERENCES jobs(job_id) ON DELETE SET NULL,
     pipeline_id VARCHAR(100) NOT NULL,
     recipient_id INTEGER NOT NULL REFERENCES customers(customer_id) ON DELETE CASCADE,
     email_address VARCHAR(255) NOT NULL,

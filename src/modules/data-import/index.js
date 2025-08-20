@@ -105,7 +105,7 @@ class DataImportModule {
                 batch_size: parseInt(process.env.IMPORT_BATCH_SIZE) || 100,
                 timeout_minutes: parseInt(process.env.IMPORT_TIMEOUT_MINUTES) || 10,
                 supported_formats: ['csv'],
-                supported_modes: ['add', 'update'],
+                supported_modes: ['add_customer', 'update_customer'],
                 supported_fields: ['email', 'name', 'status', 'topics_of_interest']
             },
             services: {

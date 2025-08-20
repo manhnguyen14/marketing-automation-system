@@ -209,9 +209,9 @@ class CSVImportService {
      */
     async processValidRow(rowData, importMode) {
         try {
-            if (importMode === 'add') {
+            if (importMode === 'add_customer') {
                 return await this.createCustomer(rowData);
-            } else if (importMode === 'update') {
+            } else if (importMode === 'update_customer') {
                 return await this.updateCustomer(rowData);
             } else {
                 throw new Error(`Invalid import mode: ${importMode}`);

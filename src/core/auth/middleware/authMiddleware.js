@@ -5,6 +5,7 @@ const authService = require('../services/authService');
  * Redirects unauthenticated users to login page
  */
 const requireAuth = (req, res, next) => {
+    console
     const token = req.cookies.auth_token;
 
     if (!token) {
@@ -40,6 +41,7 @@ const requireAuth = (req, res, next) => {
  * Prevents already logged-in users from seeing login form
  */
 const redirectIfAuthenticated = (req, res, next) => {
+    console.log('Middleware layer - Checking if user is authenticated');
     const token = req.cookies.auth_token;
 
     if (token) {
@@ -63,6 +65,7 @@ const redirectIfAuthenticated = (req, res, next) => {
  * Used for routes that need to know if user is logged in but don't require it
  */
 const extractUser = (req, res, next) => {
+    console.log('Middleware layer - Extracting user information');
     const token = req.cookies.auth_token;
 
     if (token) {

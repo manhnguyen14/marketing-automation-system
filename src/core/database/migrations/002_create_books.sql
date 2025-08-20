@@ -1,7 +1,7 @@
 -- Create books table for ebook catalog
 CREATE TABLE IF NOT EXISTS books (
-                                     book_id SERIAL PRIMARY KEY,
-                                     title VARCHAR(255) NOT NULL,
+    book_id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
     author VARCHAR(255),
     genre VARCHAR(100),
     topics TEXT[],

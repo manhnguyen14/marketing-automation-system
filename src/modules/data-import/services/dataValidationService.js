@@ -65,7 +65,7 @@ class DataValidationService {
      * Validate import mode parameter
      */
     validateImportMode(mode) {
-        const validModes = ['add', 'update'];
+        const validModes = ['add_customer', 'update_customer'];
 
         if (!mode) {
             return {
@@ -77,7 +77,7 @@ class DataValidationService {
         if (!validModes.includes(mode.toLowerCase())) {
             return {
                 isValid: false,
-                error: `Invalid import mode: ${mode}. Must be 'add' or 'update'`
+                error: `Invalid import mode: ${mode}. Must be 'add_customer' or 'update_customer'`
             };
         }
 

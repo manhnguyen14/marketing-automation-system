@@ -43,7 +43,7 @@ module.exports = {
         timeoutMinutes: parseInt(process.env.IMPORT_TIMEOUT_MINUTES) || 10,
         allowedFormats: ['.csv'],
         allowedMimeTypes: ['text/csv', 'application/csv', 'text/plain'],
-        supportedModes: ['add', 'update'],
+        supportedModes: ['add_customer', 'update_customer'],
         supportedFields: ['email', 'name', 'status', 'topics_of_interest']
     },
     external: {

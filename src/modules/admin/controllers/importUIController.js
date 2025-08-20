@@ -13,8 +13,8 @@ async function renderImportPage(req, res) {
             batchSize: parseInt(process.env.IMPORT_BATCH_SIZE) || 100,
             allowedFormats: ['.csv'],
             importModes: [
-                { value: 'add', label: 'Add New Records', description: 'Create new customer records' },
-                { value: 'update', label: 'Update Existing Records', description: 'Update existing customer records' }
+                { value: 'add_customer', label: 'Add New Records', description: 'Create new customer records' },
+                { value: 'update_customer', label: 'Update Existing Records', description: 'Update existing customer records' }
             ]
         };
 
@@ -122,7 +122,7 @@ function generateTemplateCSV(format) {
     let headers;
     let exampleRow;
 
-    if (format === 'add') {
+    if (format === 'add_customer') {
         headers = ['email', 'name', 'status', 'topics_of_interest'];
         exampleRow = [
             'user@example.com',
@@ -130,7 +130,7 @@ function generateTemplateCSV(format) {
             'active',
             '"technology,business"'
         ];
-    } else {
+    } else if (format === 'update_customer') {
         headers = ['customer_id', 'email', 'name', 'status', 'topics_of_interest'];
         exampleRow = [
             '1',
@@ -166,9 +166,9 @@ function generateTemplateCSV(format) {
  */
 async function downloadTemplate(req, res) {
     try {
-        const { format = 'add' } = req.query;
+        const { format = 'add_customer' } = req.query;
 
-        if (!['add', 'update'].includes(format)) {
+        if (!['add_customer', 'update_customer'].includes(format)) {
             req.session.errorMessage = 'Invalid template format requested.';
             return res.redirect('/admin/import/customers');
         }

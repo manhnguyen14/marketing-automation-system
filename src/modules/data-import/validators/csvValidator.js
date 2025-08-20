@@ -77,16 +77,16 @@ class CSVValidator {
         // Define allowed headers
         const allowedHeaders = ['email', 'name', 'status', 'topics_of_interest'];
 
-        if (importMode === 'update') {
+        if (importMode === 'update_customer') {
             allowedHeaders.push('customer_id');
         }
 
         // Check for required headers
-        if (importMode === 'add') {
+        if (importMode === 'add_customer') {
             if (!headers.includes('email')) {
                 errors.push('Missing required header: email (required for Add New Records mode)');
             }
-        } else if (importMode === 'update') {
+        } else if (importMode === 'update_customer') {
             if (!headers.includes('customer_id')) {
                 errors.push('Missing required header: customer_id (required for Update Existing Records mode)');
             }

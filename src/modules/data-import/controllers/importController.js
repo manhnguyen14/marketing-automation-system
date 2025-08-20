@@ -156,7 +156,7 @@ class ImportController {
                 max_file_size: parseInt(process.env.IMPORT_MAX_FILE_SIZE) || 2097152, // 2MB
                 max_file_size_mb: ((parseInt(process.env.IMPORT_MAX_FILE_SIZE) || 2097152) / 1024 / 1024).toFixed(1),
                 supported_formats: ['csv'],
-                supported_modes: ['add', 'update'],
+                supported_modes: ['add_customer', 'update_customer'],
                 batch_size: parseInt(process.env.IMPORT_BATCH_SIZE) || 100,
                 max_rows: parseInt(process.env.IMPORT_MAX_ROWS) || 10000,
                 required_headers: {
@@ -195,13 +195,13 @@ class ImportController {
      */
     async getImportTemplate(req, res) {
         try {
-            const { format = 'add' } = req.query;
+            const { format = 'add_customer' } = req.query;
 
-            if (!['add', 'update'].includes(format)) {
+            if (!['add_customer', 'update_customer'].includes(format)) {
                 return res.status(400).json({
                     success: false,
                     error: 'Invalid format parameter',
-                    message: 'Format must be "add" or "update".'
+                    message: 'Format must be "add_customer" or "update_customer".'
                 });
             }
 
@@ -235,7 +235,7 @@ class ImportController {
         let headers;
         let exampleRow;
 
-        if (format === 'add') {
+        if (format === 'add_customer') {
             headers = ['email', 'name', 'status', 'topics_of_interest'];
             exampleRow = [
                 'user@example.com',
@@ -273,7 +273,7 @@ class ImportController {
             'Empty fields are allowed except for required fields'
         ];
 
-        if (format === 'add') {
+        if (format === 'add_customer') {
             return [
                 'Use this format for adding new customers',
                 'Email field is required and must be unique',

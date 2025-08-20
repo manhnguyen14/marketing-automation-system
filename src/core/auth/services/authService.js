@@ -9,6 +9,7 @@ class AuthService {
      * @returns {boolean} - True if credentials are valid
      */
     validateCredentials(username, password) {
+        console.log('AuthService layer - Validating credentials...');
         // Simple validation against environment variables
         // In future phases, this could be enhanced with hashing
         return username === config.auth.username &&
@@ -21,6 +22,7 @@ class AuthService {
      * @returns {string} - JWT token
      */
     generateToken(username) {
+        console.log('AuthService layer - Generating token...');
         const payload = {
             username,
             role: 'admin',

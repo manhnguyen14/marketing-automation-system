@@ -1,10 +1,10 @@
 -- Create jobs table for email campaign scheduling
 CREATE TABLE IF NOT EXISTS jobs (
-                                    job_id SERIAL PRIMARY KEY,
-                                    pipeline_name VARCHAR(100) NOT NULL,
+    job_id SERIAL PRIMARY KEY,
+    pipeline_name VARCHAR(100) NOT NULL,
     action_tag VARCHAR(100),
     scheduled_time TIMESTAMP WITH TIME ZONE NOT NULL,
-                                 status VARCHAR(20) DEFAULT 'NEW' CHECK (status IN ('NEW', 'RUNNING', 'DONE', 'FAILED')),
+    status VARCHAR(20) DEFAULT 'NEW' CHECK (status IN ('NEW', 'RUNNING', 'DONE', 'FAILED')),
     description TEXT,
     metadata JSONB,
     success_count INTEGER DEFAULT 0,

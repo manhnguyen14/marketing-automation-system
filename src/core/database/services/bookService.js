@@ -25,10 +25,10 @@ class BookService {
         const book = Book.create(bookData);
 
         const query = `
-      INSERT INTO books (title, author, genre, topics, status)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING *
-    `;
+            INSERT INTO books (title, author, genre, topics, status)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+        `;
 
         const values = [
             book.title,
@@ -57,10 +57,10 @@ class BookService {
                     const book = Book.create(bookData);
 
                     const query = `
-            INSERT INTO books (title, author, genre, topics, status)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING book_id
-          `;
+                        INSERT INTO books (title, author, genre, topics, status)
+                        VALUES ($1, $2, $3, $4, $5)
+                        RETURNING book_id
+                    `;
 
                     const values = [
                         book.title,
@@ -170,6 +170,9 @@ class BookService {
 
         query += ` ORDER BY created_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
         values.push(limit, offset);
+        
+        // values is an array. In the query, we refer to value as $1, $2, etc.
+        // The first value in the array is $1, the second value is $2, etc.
 
         const result = await pool.query(query, values);
         return result.rows.map(row => Book.fromDatabaseRow(row));

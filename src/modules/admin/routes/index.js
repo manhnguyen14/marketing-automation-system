@@ -25,6 +25,9 @@ const upload = multer({
 /**
  * Public routes (no authentication required)
  */
+// get --> render page according to input
+// post --> handle form submission
+
 
 // Login page - redirect to dashboard if already authenticated
 router.get('/login', authMiddleware.redirectIfAuthenticated, authUIController.showLogin);

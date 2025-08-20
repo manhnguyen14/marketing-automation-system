@@ -332,7 +332,7 @@ class FileValidatorMiddleware {
     validateImportMode(req, res, next) {
         try {
             const { mode } = req.body;
-            const validModes = ['add', 'update'];
+            const validModes = ['add_customer', 'update_customer'];
 
             if (!mode) {
                 return this.sendValidationError(
@@ -348,7 +348,7 @@ class FileValidatorMiddleware {
                     req, res,
                     'INVALID_MODE',
                     'Invalid import mode',
-                    `Import mode must be 'add' or 'update', received: ${mode}`
+                    `Import mode must be 'add_customer' or 'update_customer', received: ${mode}`
                 );
             }
 

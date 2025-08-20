@@ -131,4 +131,5 @@ class Book {
     }
 }
 
+// export the class, not the instance (new Book())
 module.exports = Book;

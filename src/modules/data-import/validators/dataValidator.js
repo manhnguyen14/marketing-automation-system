@@ -16,10 +16,10 @@ class DataValidator {
         const trimmedData = this.trimRowData(rowData);
 
         // Validate based on import mode
-        if (importMode === 'add') {
+        if (importMode === 'add_customer') {
             const addValidation = await this.validateAddModeRow(trimmedData, rowIndex, existingEmails);
             errors.push(...addValidation.errors);
-        } else if (importMode === 'update') {
+        } else if (importMode === 'update_customer') {
             const updateValidation = await this.validateUpdateModeRow(trimmedData, rowIndex, existingEmails);
             errors.push(...updateValidation.errors);
         }

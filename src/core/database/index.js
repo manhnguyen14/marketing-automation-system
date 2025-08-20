@@ -33,7 +33,7 @@ class Database {
             await customerService.initialize();
             await bookService.initialize();
 
-            // Run migrations
+            // Run migrations when initialize database
             await migrationRunner.runMigrations();
 
             this.isInitialized = true;
@@ -141,6 +141,8 @@ const database = new Database();
 module.exports = database;
 module.exports.connection = connection;
 module.exports.migrationRunner = migrationRunner;
+
+// export all models again for convenience for importing all models together
 module.exports.models = {
     Customer,
     Book,
