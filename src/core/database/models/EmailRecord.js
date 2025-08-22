@@ -7,7 +7,27 @@ class EmailRecord {
         this.emailAddress = data.email_address || '';
         this.subject = data.subject || '';
         this.contentType = data.content_type || 'predefined';
-        this.templateId = data.template_id || '';
+        this.templateId = data.template_id || null; // ✅ UPDATE: Changed from string to null
+
+        // ✅ ADD: New fields for Postmark integration
+        this.campaignId = data.campaign_id || null;
+        this.processedHtmlContent = data.processed_html_content || null;
+        this.processedTextContent = data.processed_text_content || null;
+        this.variablesUsed = data.variables_used || null;
+        this.ccEmails = data.cc_emails || null;
+        this.bccEmails = data.bcc_emails || null;
+        this.replyTo = data.reply_to || null;
+        this.tagString = data.tag_string || null;
+        this.metadata = data.metadata || null;
+        this.batchId = data.batch_id || null;
+
+        // ✅ ADD: Postmark response fields
+        this.errorCode = data.error_code || null;
+        this.errorMessage = data.error_message || null;
+        this.postmarkResponseData = data.postmark_response_data || null;
+        this.submittedAt = data.submitted_at || null;
+
+        // Existing fields
         this.postmarkMessageId = data.postmark_message_id || '';
         this.sentAt = data.sent_at || null;
         this.deliveryStatus = data.delivery_status || '';
@@ -42,6 +62,15 @@ class EmailRecord {
         return this.deliveryStatus === 'failed' || this.isBounced();
     }
 
+    // ✅ ADD: New status checking methods
+    isSubmitted() {
+        return this.submittedAt !== null;
+    }
+
+    hasPostmarkError() {
+        return this.errorCode !== null && this.errorCode !== 0;
+    }
+
     // Content type methods
     isPredefinedTemplate() {
         return this.contentType === 'predefined';
@@ -49,6 +78,15 @@ class EmailRecord {
 
     isAIGenerated() {
         return this.contentType === 'ai_generated';
+    }
+
+    // ✅ ADD: Template-related methods
+    hasTemplate() {
+        return this.templateId !== null;
+    }
+
+    isProcessedContent() {
+        return this.processedHtmlContent !== null;
     }
 
     // Engagement methods
@@ -61,6 +99,7 @@ class EmailRecord {
         if (this.isOpened()) return 'opened';
         if (this.isDelivered()) return 'delivered';
         if (this.isSent()) return 'sent';
+        if (this.isSubmitted()) return 'submitted';
         return 'pending';
     }
 
@@ -86,6 +125,25 @@ class EmailRecord {
     getTimeToOpenHours() {
         const timeToOpen = this.getTimeToOpen();
         return timeToOpen ? Math.round(timeToOpen / (1000 * 60 * 60 * 100)) / 100 : null;
+    }
+
+    // ✅ ADD: New time calculation methods
+    getTimeToSubmit() {
+        if (!this.createdAt || !this.submittedAt) return null;
+
+        const created = new Date(this.createdAt);
+        const submitted = new Date(this.submittedAt);
+
+        return submitted.getTime() - created.getTime();
+    }
+
+    getTimeToDeliver() {
+        if (!this.submittedAt || !this.sentAt) return null;
+
+        const submitted = new Date(this.submittedAt);
+        const delivered = new Date(this.sentAt);
+
+        return delivered.getTime() - submitted.getTime();
     }
 
     // Validation methods
@@ -132,6 +190,20 @@ class EmailRecord {
             subject: this.subject,
             content_type: this.contentType,
             template_id: this.templateId,
+            campaign_id: this.campaignId, // ✅ ADD
+            processed_html_content: this.processedHtmlContent, // ✅ ADD
+            processed_text_content: this.processedTextContent, // ✅ ADD
+            variables_used: this.variablesUsed, // ✅ ADD
+            cc_emails: this.ccEmails, // ✅ ADD
+            bcc_emails: this.bccEmails, // ✅ ADD
+            reply_to: this.replyTo, // ✅ ADD
+            tag_string: this.tagString, // ✅ ADD
+            metadata: this.metadata, // ✅ ADD
+            batch_id: this.batchId, // ✅ ADD
+            error_code: this.errorCode, // ✅ ADD
+            error_message: this.errorMessage, // ✅ ADD
+            postmark_response_data: this.postmarkResponseData, // ✅ ADD
+            submitted_at: this.submittedAt, // ✅ ADD
             postmark_message_id: this.postmarkMessageId,
             sent_at: this.sentAt,
             delivery_status: this.deliveryStatus,
@@ -152,6 +224,20 @@ class EmailRecord {
             subject: this.subject,
             contentType: this.contentType,
             templateId: this.templateId,
+            campaignId: this.campaignId, // ✅ ADD
+            processedHtmlContent: this.processedHtmlContent, // ✅ ADD
+            processedTextContent: this.processedTextContent, // ✅ ADD
+            variablesUsed: this.variablesUsed, // ✅ ADD
+            ccEmails: this.ccEmails, // ✅ ADD
+            bccEmails: this.bccEmails, // ✅ ADD
+            replyTo: this.replyTo, // ✅ ADD
+            tagString: this.tagString, // ✅ ADD
+            metadata: this.metadata, // ✅ ADD
+            batchId: this.batchId, // ✅ ADD
+            errorCode: this.errorCode, // ✅ ADD
+            errorMessage: this.errorMessage, // ✅ ADD
+            postmarkResponseData: this.postmarkResponseData, // ✅ ADD
+            submittedAt: this.submittedAt, // ✅ ADD
             postmarkMessageId: this.postmarkMessageId,
             sentAt: this.sentAt,
             deliveryStatus: this.deliveryStatus,
@@ -164,6 +250,9 @@ class EmailRecord {
             isOpened: this.isOpened(),
             isClicked: this.isClicked(),
             isBounced: this.isBounced(),
+            isSubmitted: this.isSubmitted(), // ✅ ADD
+            hasPostmarkError: this.hasPostmarkError(), // ✅ ADD
+            hasTemplate: this.hasTemplate(), // ✅ ADD
             engagementLevel: this.getEngagementLevel(),
             timeToOpenHours: this.getTimeToOpenHours()
         };
@@ -220,6 +309,22 @@ class EmailRecord {
         this.postmarkMessageId = messageId;
     }
 
+    // ✅ ADD: New update methods for Postmark integration
+    updatePostmarkResponse(response) {
+        this.postmarkMessageId = response.MessageID || this.postmarkMessageId;
+        this.errorCode = response.ErrorCode || 0;
+        this.errorMessage = response.Message || null;
+        this.postmarkResponseData = response;
+        this.submittedAt = new Date();
+
+        if (response.ErrorCode === 0) {
+            this.deliveryStatus = 'sent';
+            this.sentAt = new Date();
+        } else {
+            this.deliveryStatus = 'failed';
+        }
+    }
+
     // Helper method for field name conversion
     _camelCase(str) {
         return str.replace(/_([a-z])/g, (match, letter) => letter.toUpperCase());
@@ -227,7 +332,7 @@ class EmailRecord {
 
     // Static helper methods for reporting
     static getEngagementStages() {
-        return ['sent', 'delivered', 'opened', 'clicked'];
+        return ['submitted', 'sent', 'delivered', 'opened', 'clicked'];
     }
 
     static calculateEngagementRate(emails, stage) {
@@ -237,6 +342,9 @@ class EmailRecord {
         let count = 0;
         emails.forEach(email => {
             switch (stage) {
+                case 'submitted':
+                    if (email.isSubmitted()) count++;
+                    break;
                 case 'delivered':
                     if (email.isDelivered()) count++;
                     break;
@@ -252,6 +360,15 @@ class EmailRecord {
         });
 
         return (count / total) * 100;
+    }
+
+    // ✅ ADD: New helper methods
+    static getDeliveryStatuses() {
+        return ['pending', 'submitted', 'sent', 'delivered', 'failed', 'bounced'];
+    }
+
+    static getContentTypes() {
+        return ['predefined', 'ai_generated'];
     }
 }
 

@@ -6,10 +6,13 @@ const Customer = require('./models/Customer');
 const Book = require('./models/Book');
 const Job = require('./models/Job');
 const EmailRecord = require('./models/EmailRecord');
+const EmailTemplate = require('./models/EmailTemplate'); // ✅ ADD
 
 // Services
 const customerService = require('./services/customerService');
 const bookService = require('./services/bookService');
+const emailTemplateService = require('./services/emailTemplateService'); // ✅ ADD
+const emailRecordService = require('./services/emailRecordService'); // ✅ ADD
 
 class Database {
     constructor() {
@@ -32,6 +35,8 @@ class Database {
             // Initialize services with connection
             await customerService.initialize();
             await bookService.initialize();
+            await emailTemplateService.initialize(); // ✅ ADD
+            await emailRecordService.initialize(); // ✅ ADD
 
             // Run migrations when initialize database
             await migrationRunner.runMigrations();
@@ -95,13 +100,29 @@ class Database {
         return bookService;
     }
 
+    // ✅ ADD: Email services access methods
+    get emailTemplates() {
+        if (!emailTemplateService.getPool()) {
+            emailTemplateService.initialize();
+        }
+        return emailTemplateService;
+    }
+
+    get emailRecords() {
+        if (!emailRecordService.getPool()) {
+            emailRecordService.initialize();
+        }
+        return emailRecordService;
+    }
+
     // Model access
     get models() {
         return {
             Customer,
             Book,
             Job,
-            EmailRecord
+            EmailRecord,
+            EmailTemplate // ✅ ADD
         };
     }
 
@@ -115,16 +136,19 @@ class Database {
             const [
                 customerCount,
                 bookCount,
+                emailTemplateCount, // ✅ ADD
                 migrationStatus
             ] = await Promise.all([
                 this.customers.getCustomerCount(),
                 this.books.getBookCount(),
+                this.emailTemplates.getTemplateCount(), // ✅ ADD
                 migrationRunner.getMigrationStatus()
             ]);
 
             return {
                 customers: customerCount,
                 books: bookCount,
+                emailTemplates: emailTemplateCount, // ✅ ADD
                 migrations: migrationStatus,
                 connectionStatus: await this.testConnection()
             };
@@ -147,9 +171,13 @@ module.exports.models = {
     Customer,
     Book,
     Job,
-    EmailRecord
+    EmailRecord,
+    EmailTemplate // ✅ ADD
 };
+
 module.exports.services = {
     customerService,
-    bookService
+    bookService,
+    emailTemplateService, // ✅ ADD
+    emailRecordService // ✅ ADD
 };

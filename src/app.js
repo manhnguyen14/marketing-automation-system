@@ -11,10 +11,12 @@ const config = require('./config');
 // Import core modules
 const { authController } = require('./core/auth');
 const database = require('./core/database');
+const emailModule = require('./core/email'); // ✅ ADD
 
 // Import feature modules
 const adminModule = require('./modules/admin');
 const dataImportModule = require('./modules/data-import');
+const templateManagementModule = require('./modules/template-management'); // ✅ ADD
 const errorHandler = require('./shared/middleware/errorHandler');
 
 const app = express();
@@ -255,7 +257,27 @@ async function initializeApplication() {
             console.log('⚠️  Database: Not available (running in limited mode)');
         }
 
-        // 2. Initialize admin module
+        // 2. Initialize email module (depends on database)
+        console.log('📧 Initializing email module...');
+        const emailInitialized = await emailModule.initialize();
+
+        if (emailInitialized && emailModule.isReady()) {
+            console.log('📧 Email Module: Initialized and ready');
+        } else {
+            console.log('⚠️  Email Module: Not available (email functionality limited)');
+        }
+
+        // 3. Initialize template management module
+        console.log('📝 Initializing template management module...');
+        const templateInitialized = await templateManagementModule.initialize();
+
+        if (templateInitialized) {
+            console.log('📝 Template Management: Initialized successfully');
+        } else {
+            console.log('⚠️  Template Management: Initialization failed');
+        }
+
+        // 4. Initialize admin module
         console.log('🎨 Initializing admin module...');
         const adminInitialized = await adminModule.initialize();
 
@@ -265,7 +287,7 @@ async function initializeApplication() {
             console.log('⚠️  Admin Module: Initialization failed');
         }
 
-        // 3. Initialize data import module
+        // 5. Initialize data import module
         console.log('📁 Initializing data import module...');
         const importInitialized = await dataImportModule.initialize();
 
@@ -275,14 +297,17 @@ async function initializeApplication() {
             console.log('⚠️  Data Import Module: Initialization failed (will retry on first use)');
         }
 
-        // 4. Setup routes after initialization
+        // 6. Setup routes after initialization
         console.log('🛣️  Setting up routes...');
 
-        // Health check endpoint (enhanced with database status)
+        // Health check endpoint (enhanced with all module status)
         app.get('/api/health', async (req, res) => {
             try {
                 const dbStatus = await database.testConnection();
+                const emailStatus = emailModule.getStatus();
+                const emailConnectionTest = await emailModule.testConnection();
                 const importStatus = dataImportModule.getStatus();
+                const templateStatus = templateManagementModule.getStatus();
 
                 res.json({
                     success: true,
@@ -291,7 +316,10 @@ async function initializeApplication() {
                         timestamp: new Date().toISOString(),
                         database: dbStatus,
                         modules: {
-                            dataImport: importStatus
+                            email: emailStatus,
+                            emailConnection: emailConnectionTest,
+                            dataImport: importStatus,
+                            templateManagement: templateStatus
                         },
                         environment: config.nodeEnv
                     }
@@ -310,6 +338,36 @@ async function initializeApplication() {
         app.get('/api/auth/logout', authController.logout);
         app.get('/api/auth/verify', authController.verify);
 
+        // ✅ ADD: Email API routes
+        if (emailInitialized) {
+            app.use('/api/email', emailModule.getRoutes());
+            console.log('🛣️  Email API routes: ✅ Configured');
+        } else {
+            app.use('/api/email', (req, res) => {
+                res.status(503).json({
+                    success: false,
+                    error: 'Email service unavailable',
+                    message: 'Email module initialization failed. Please contact administrator.'
+                });
+            });
+            console.log('🛣️  Email API routes: ⚠️ Fallback configured');
+        }
+
+        // ✅ ADD: Template management API routes
+        if (templateInitialized) {
+            app.use('/api/templates', templateManagementModule.getRoutes());
+            console.log('🛣️  Template management API routes: ✅ Configured');
+        } else {
+            app.use('/api/templates', (req, res) => {
+                res.status(503).json({
+                    success: false,
+                    error: 'Template management service unavailable',
+                    message: 'Template module initialization failed. Please contact administrator.'
+                });
+            });
+            console.log('🛣️  Template management API routes: ⚠️ Fallback configured');
+        }
+
         // Data Import API routes - only setup if module is initialized
         if (importInitialized) {
             app.use('/api/data-import', dataImportModule.getRoutes());
@@ -326,7 +384,7 @@ async function initializeApplication() {
             console.log('🛣️  Data import API routes: ⚠️ Fallback configured');
         }
 
-        // ✅ UPDATE: Admin interface routes - add generic import routes
+        // Admin interface routes - add generic import routes
         app.use('/admin/import-data', adminModule.getRoutes().genericImport);
         app.use('/admin', adminModule.getRoutes().main);
         console.log('🛣️  Admin interface routes: ✅ Configured');
@@ -357,6 +415,8 @@ async function startServer() {
             console.log(`📡 Server running on: http://localhost:${config.port}`);
             console.log(`🔐 Admin login: http://localhost:${config.port}/admin/login`);
             console.log(`📁 Data Import: http://localhost:${config.port}/admin/import-data`);
+            console.log(`📧 Email API: http://localhost:${config.port}/api/email/health`);
+            console.log(`📝 Templates API: http://localhost:${config.port}/api/templates`);
             console.log(`💡 Health check: http://localhost:${config.port}/api/health`);
             console.log('='.repeat(50));
             console.log(`Environment: ${config.nodeEnv}`);
@@ -370,12 +430,26 @@ async function startServer() {
             console.log('\n🛑 Shutting down gracefully...');
 
             server.close(async () => {
-                // Shutdown data import module
+                // Shutdown modules in reverse order
                 try {
                     await dataImportModule.shutdown();
                     console.log('📁 Data import module shutdown: ✅');
                 } catch (error) {
                     console.error('📁 Data import module shutdown: ❌', error.message);
+                }
+
+                try {
+                    await templateManagementModule.shutdown();
+                    console.log('📝 Template management module shutdown: ✅');
+                } catch (error) {
+                    console.error('📝 Template management module shutdown: ❌', error.message);
+                }
+
+                try {
+                    await emailModule.shutdown();
+                    console.log('📧 Email module shutdown: ✅');
+                } catch (error) {
+                    console.error('📧 Email module shutdown: ❌', error.message);
                 }
 
                 // Close database

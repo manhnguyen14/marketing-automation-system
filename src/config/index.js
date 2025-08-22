@@ -19,6 +19,28 @@ if (process.env.JWT_SECRET.length < 32) {
     process.exit(1);
 }
 
+// ✅ ADD: Email configuration validation
+function validateEmailConfig() {
+    const emailErrors = [];
+
+    if (!process.env.POSTMARK_TOKEN) {
+        emailErrors.push('POSTMARK_TOKEN is required for email functionality');
+    }
+
+    if (!process.env.POSTMARK_FROM_EMAIL) {
+        emailErrors.push('POSTMARK_FROM_EMAIL is required for email functionality');
+    }
+
+    if (emailErrors.length > 0) {
+        console.warn('⚠️  Email configuration warnings:');
+        emailErrors.forEach(error => console.warn(`   - ${error}`));
+        console.warn('💡 Email functionality will be limited without proper configuration.\n');
+    }
+}
+
+// Run email validation
+validateEmailConfig();
+
 module.exports = {
     port: parseInt(process.env.PORT) || 3000,
     nodeEnv: process.env.NODE_ENV || 'development',
@@ -27,13 +49,35 @@ module.exports = {
         password: process.env.ADMIN_PASSWORD,
         jwtSecret: process.env.JWT_SECRET
     },
-    // Add this database configuration section
     database: {
         url: process.env.DATABASE_URL,
         poolMin: parseInt(process.env.DB_POOL_MIN) || 2,
         poolMax: parseInt(process.env.DB_POOL_MAX) || 10,
         acquireTimeout: parseInt(process.env.DB_ACQUIRE_TIMEOUT) || 30000,
         ssl: process.env.NODE_ENV === 'production' // Enable SSL in production
+    },
+    // ✅ ADD: Email configuration section
+    email: {
+        postmark: {
+            token: process.env.POSTMARK_TOKEN,
+            fromEmail: process.env.POSTMARK_FROM_EMAIL || 'noreply@company.com',
+            apiUrl: 'https://api.postmarkapp.com'
+        },
+        batch: {
+            size: parseInt(process.env.EMAIL_BATCH_SIZE) || 50,
+            timeout: parseInt(process.env.EMAIL_TIMEOUT_SECONDS) || 30,
+            maxRecipients: parseInt(process.env.EMAIL_MAX_RECIPIENTS) || 500
+        },
+        templates: {
+            cacheTtl: parseInt(process.env.TEMPLATE_CACHE_TTL) || 3600,
+            variablePattern: /\{\{([^}]+)\}\}/g
+        },
+        validation: {
+            requirePostmarkToken: true,
+            requireFromEmail: true,
+            maxSubjectLength: 255,
+            maxContentLength: 1000000 // 1MB
+        }
     },
     // Data import configuration
     dataImport: {

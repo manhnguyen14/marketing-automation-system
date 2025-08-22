@@ -148,7 +148,7 @@ router.use((error, req, res, next) => {
         }
 
         // Redirect to appropriate page
-        const redirectPath = entity ? `/admin/import-data/${entity}` : '/admin/import';
+        const redirectPath = entity ? `/admin/import-data/${entity}` : '/admin/import-data';
         return res.redirect(redirectPath);
     }
 

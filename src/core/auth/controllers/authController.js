@@ -41,9 +41,14 @@ const login = (req, res) => {
 
         console.log(`Successful login for username: ${username}`);
 
-        // Return success response
+        // ✅ FIX: Return token in JSON response for API access
         res.json({
             success: true,
+            token: token,  // ✅ ADD: Include token in response
+            user: {       // ✅ ADD: Include user info
+                username: username,
+                role: 'admin'
+            },
             message: 'Login successful',
             redirect: '/admin/dashboard'
         });

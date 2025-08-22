@@ -20,7 +20,9 @@
     "nodejs",
     "postgresql",
     "csv-import",
-    "data-management"
+    "data-management",
+    "postmark",
+    "email-templates"
   ],
   "author": "Marketing Automation Team",
   "license": "MIT",
@@ -34,7 +36,8 @@
     "pg": "^8.8.0",
     "csv-parser": "^3.0.0",
     "multer": "2.0.2",
-    "mime-types": "^2.1.35"
+    "mime-types": "^2.1.35",
+    "postmark": "^4.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.0"
