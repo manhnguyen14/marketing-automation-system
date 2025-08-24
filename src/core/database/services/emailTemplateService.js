@@ -303,9 +303,15 @@ class EmailTemplateService {
         const pool = this.getPool();
         if (!pool) throw new Error('Database not available');
 
+        // Get template first to get the template code for usage check
+        const template = await this.getTemplateById(templateId);
+        if (!template) {
+            throw new Error('Template not found');
+        }
+
         // Check if template is used in any email records
-        const usageQuery = 'SELECT COUNT(*) as count FROM email_records WHERE template_id = $1';
-        const usageResult = await pool.query(usageQuery, [templateId]);
+        const usageQuery = 'SELECT COUNT(*) as count FROM email_records WHERE template_code = $1';
+        const usageResult = await pool.query(usageQuery, [template.templateCode]);
 
         if (parseInt(usageResult.rows[0].count) > 0) {
             throw new Error('Cannot delete template that has been used in email campaigns');

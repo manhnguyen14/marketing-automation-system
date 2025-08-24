@@ -20,7 +20,7 @@ const PIPELINES = {
         description: 'Announce new books to interested customers',
         templateType: 'predefined',
         requiresReview: false,
-        defaultTemplateId: null, // Set dynamically when template is created
+        defaultTemplateCode: null, // Set dynamically when template is created
         class: NewBookReleasePipeline,
         category: 'marketing',
         frequency: 'on_demand',

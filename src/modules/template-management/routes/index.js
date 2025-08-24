@@ -16,6 +16,7 @@ router.delete('/:templateId', templateController.deleteTemplate);
 
 // Template status management
 router.put('/:templateId/status', templateController.updateTemplateStatus);
+router.put('/by-code/:templateCode/status', templateController.updateTemplateStatusByCode);
 router.get('/review/pending', templateController.getTemplatesWaitingReview);
 
 // Template preview and testing

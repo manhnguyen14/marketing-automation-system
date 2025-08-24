@@ -5,16 +5,16 @@ class NewBookReleasePipeline extends PipelineInterface {
         super();
         this.pipelineName = 'NEW_BOOK_RELEASE';
         this.templateType = 'predefined';
-        this.defaultTemplateId = null; // Will be set when template is created
+        this.defaultTemplateCode = null; // Will be set when template is created
         this.newBook = null; // Book to announce
     }
 
     /**
      * Initialize pipeline.js with specific book and template
      */
-    initialize(newBook, templateId) {
+    initialize(newBook, templateCode) {
         this.newBook = newBook;
-        this.defaultTemplateId = templateId;
+        this.defaultTemplateCode = templateCode;
         return this;
     }
 
@@ -28,8 +28,8 @@ class NewBookReleasePipeline extends PipelineInterface {
             throw new Error('New book must be specified for book release pipeline.js');
         }
 
-        if (!this.defaultTemplateId) {
-            throw new Error('Template ID must be specified for book release pipeline.js');
+        if (!this.defaultTemplateCode) {
+            throw new Error('Template code must be specified for book release pipeline.js');
         }
 
         return await this.createQueueItems();
@@ -130,6 +130,7 @@ class NewBookReleasePipeline extends PipelineInterface {
 
         const templateData = {
             name: 'New Book Release Announcement',
+            template_code: `new_book_release_template_${Date.now()}`,
             subject_template: 'New Book: {{bookTitle}} by {{bookAuthor}} 📚',
             html_template: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
@@ -192,16 +193,16 @@ The Library Team`,
     /**
      * Static method to run pipeline.js for specific book
      */
-    static async runForBook(bookData, templateId = null) {
+    static async runForBook(bookData, templateCode = null) {
         // Create template if not provided
-        if (!templateId) {
+        if (!templateCode) {
             const template = await NewBookReleasePipeline.createBookReleaseTemplate();
-            templateId = template.templateId;
+            templateCode = template.templateCode;
         }
 
         // Create and run pipeline.js
         const pipeline = new NewBookReleasePipeline();
-        pipeline.initialize(bookData, templateId);
+        pipeline.initialize(bookData, templateCode);
 
         return await pipeline.runPipeline();
     }

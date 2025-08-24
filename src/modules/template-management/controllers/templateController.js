@@ -382,6 +382,71 @@ class TemplateController {
         }
     }
 
+    // Update template status by code (approve/reject)
+    async updateTemplateStatusByCode(req, res) {
+        try {
+            const { templateCode } = req.params;
+            const { status } = req.body;
+
+            if (!templateCode) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Template code is required'
+                });
+            }
+
+            if (!status) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Status is required'
+                });
+            }
+
+            const validStatuses = ['APPROVED', 'WAIT_REVIEW', 'INACTIVE'];
+            if (!validStatuses.includes(status)) {
+                return res.status(400).json({
+                    success: false,
+                    error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+                });
+            }
+
+            console.log(`📝 Updating template status by code: ${templateCode} -> ${status}`);
+
+            // Get template by code first to get the ID
+            const template = await emailTemplateService.getTemplateByCode(templateCode);
+            if (!template) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Template not found'
+                });
+            }
+
+            const updatedTemplate = await emailTemplateService.updateTemplateStatus(template.templateId, status);
+
+            res.json({
+                success: true,
+                data: updatedTemplate.toJSON(),
+                message: `Template status updated to ${status}`
+            });
+
+        } catch (error) {
+            console.error('❌ Template status update by code failed:', error.message);
+
+            if (error.message.includes('not found')) {
+                res.status(404).json({
+                    success: false,
+                    error: 'Template not found'
+                });
+            } else {
+                res.status(500).json({
+                    success: false,
+                    error: 'Failed to update template status',
+                    details: error.message
+                });
+            }
+        }
+    }
+
     // Get templates waiting for review
     async getTemplatesWaitingReview(req, res) {
         try {

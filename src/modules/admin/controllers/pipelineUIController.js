@@ -126,7 +126,7 @@ class PipelineUIController {
 
     /**
      * Approve template via UI
-     * POST /admin/pipelines/templates/:templateId/approve
+     * POST /admin/pipelines/templates/:template/approve
      */
     async approveTemplate(req, res) {
         try {

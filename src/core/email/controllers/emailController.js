@@ -48,10 +48,10 @@ class EmailController {
         try {
             const emailData = req.body;
 
-            if (!emailData.templateId || !emailData.recipient) {
+            if (!emailData.templateCode || !emailData.recipient) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Template ID and recipient are required'
+                    error: 'Template code and recipient are required'
                 });
             }
 
@@ -81,18 +81,18 @@ class EmailController {
      */
     async previewTemplate(req, res) {
         try {
-            const { templateId, variables = {} } = req.body;
+            const { templateCode, variables = {} } = req.body;
 
-            if (!templateId) {
+            if (!templateCode) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Template ID is required'
+                    error: 'Template code is required'
                 });
             }
 
-            console.log(`🔍 Previewing template ${templateId}`);
+            console.log(`🔍 Previewing template ${templateCode}`);
 
-            const result = await emailSendService.previewEmailTemplate(templateId, variables);
+            const result = await emailSendService.previewEmailTemplate(templateCode, variables);
 
             res.json({
                 success: true,

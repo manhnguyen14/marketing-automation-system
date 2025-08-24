@@ -2,7 +2,7 @@ class PipelineInterface {
     constructor() {
         this.pipelineName = 'base_pipeline';
         this.templateType = 'predefined'; // 'predefined' or 'ai_generated'
-        this.defaultTemplateId = null;
+        this.defaultTemplateCode = null;
     }
 
     /**
@@ -30,7 +30,7 @@ class PipelineInterface {
      * @param {number} customerId - Customer ID for personalization
      * @param {Object} contextData - Pipeline-specific context data
      * @param {number} queueItemId - Queue item ID for tracking
-     * @returns {Promise<Object>} { templateId, retryAllowed, error?, nextScheduledDate? }
+     * @returns {Promise<Object>} { templateCode, retryAllowed, error?, nextScheduledDate? }
      */
     async generateTemplate(customerId, contextData, queueItemId) {
         if (this.templateType === 'predefined') {
@@ -66,7 +66,7 @@ class PipelineInterface {
         return {
             name: this.pipelineName,
             templateType: this.templateType,
-            defaultTemplateId: this.defaultTemplateId,
+            defaultTemplateCode: this.defaultTemplateCode,
             requiresAIGeneration: this.templateType === 'ai_generated',
             requiresReview: this.templateType === 'ai_generated'
         };
@@ -87,8 +87,8 @@ class PipelineInterface {
             errors.push('Template type must be predefined or ai_generated');
         }
 
-        if (this.templateType === 'predefined' && !this.defaultTemplateId) {
-            errors.push('Default template ID required for predefined template pipelines');
+        if (this.templateType === 'predefined' && !this.defaultTemplateCode) {
+            errors.push('Default template code required for predefined template pipelines');
         }
 
         return {
@@ -117,13 +117,13 @@ class PipelineInterface {
             return {
                 ...baseData,
                 status: 'SCHEDULED',
-                template_id: this.defaultTemplateId
+                template_code: this.defaultTemplateCode
             };
         } else {
             return {
                 ...baseData,
                 status: 'WAIT_GENERATE_TEMPLATE',
-                template_id: null
+                template_code: null
             };
         }
     }
@@ -153,13 +153,13 @@ class PipelineInterface {
      * Static method to create pipeline.js instance
      * @param {string} pipelineName - Name of pipeline.js
      * @param {string} templateType - Template type
-     * @param {number} defaultTemplateId - Default template ID (for predefined)
+     * @param {string} defaultTemplateCode - Default template code (for predefined)
      */
-    static create(pipelineName, templateType = 'predefined', defaultTemplateId = null) {
+    static create(pipelineName, templateType = 'predefined', defaultTemplateCode = null) {
         const pipeline = new this();
         pipeline.pipelineName = pipelineName;
         pipeline.templateType = templateType;
-        pipeline.defaultTemplateId = defaultTemplateId;
+        pipeline.defaultTemplateCode = defaultTemplateCode;
 
         const validation = pipeline.validateConfig();
         if (!validation.isValid) {

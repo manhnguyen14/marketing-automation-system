@@ -404,10 +404,6 @@ class EmailRecordService {
         return await this.getEmailMetrics({ campaignId });
     }
 
-    async getTemplateMetrics(templateId) {
-        return await this.getEmailMetrics({ templateId });
-    }
-
     async getBatchMetrics(batchId) {
         return await this.getEmailMetrics({ batchId });
     }

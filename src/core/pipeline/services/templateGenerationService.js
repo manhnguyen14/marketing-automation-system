@@ -195,12 +195,13 @@ class TemplateGenerationService {
      * @param {Date} scheduledDate - When to schedule emails
      * @returns {Promise<Object>} Approval result
      */
-    async approveTemplate(templateCode, scheduledDate = new Date()) {
+    async approveTemplate(templateId, scheduledDate = new Date()) {
         try {
+            const template = await emailTemplateService.getTemplateById(templateId);
+            const templateCode = template.templateCode;
             console.log(`✅ Approving template ${templateCode}`);
 
             // Get template by code first to get the ID for the approval
-            const template = await emailTemplateService.getTemplateByCode(templateCode);
             if (!template) {
                 throw new Error('Template not found');
             }

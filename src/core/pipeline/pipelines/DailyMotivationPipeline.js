@@ -5,7 +5,7 @@ class DailyMotivationPipeline extends PipelineInterface {
         super();
         this.pipelineName = 'DAILY_MOTIVATION';
         this.templateType = 'ai_generated';
-        this.defaultTemplateId = null;
+        this.defaultTemplateCode = null;
     }
 
     /**
@@ -130,6 +130,7 @@ class DailyMotivationPipeline extends PipelineInterface {
 
             const templateData = {
                 name: `Daily Motivation - ${customer.email} - ${new Date().toISOString()}`,
+                template_code: `daily_motivation_${customer.customerId}_${Date.now()}`,
                 subject_template: aiContent.subject,
                 html_template: aiContent.html,
                 text_template: aiContent.text,
@@ -143,7 +144,7 @@ class DailyMotivationPipeline extends PipelineInterface {
             const template = await emailTemplateService.createTemplate(templateData);
 
             return {
-                templateId: template.templateId,
+                templateCode: template.templateCode,
                 retryAllowed: true,
                 nextScheduledDate: this.getNextMotivationTime()
             };
@@ -151,7 +152,7 @@ class DailyMotivationPipeline extends PipelineInterface {
         } catch (error) {
             console.error(`❌ Template generation failed for customer ${customerId}:`, error.message);
             return {
-                templateId: null,
+                templateCode: null,
                 retryAllowed: true,
                 error: error.message
             };
