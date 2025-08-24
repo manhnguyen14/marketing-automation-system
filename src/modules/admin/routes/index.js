@@ -3,6 +3,7 @@ const router = express.Router();
 const { authMiddleware } = require('../../../core/auth');
 const authUIController = require('../controllers/authUIController');
 const dashboardController = require('../controllers/dashboardController');
+const pipelineRoutes = require('./pipelineRoutes'); // ✅ ADD
 
 /**
  * Public routes (no authentication required)
@@ -28,6 +29,11 @@ router.get('/import', authMiddleware.requireAuth, (req, res) => {
 });
 
 /**
+ * ✅ NEED TO ADD: Pipeline Management Routes
+ */
+router.use('/', pipelineRoutes);
+
+/**
  * General Admin Routes
  */
 
@@ -45,6 +51,7 @@ router.get('/health', (req, res) => {
         features: {
             authentication: 'ready',
             dashboard: 'ready',
+            pipelines: 'ready', // ✅ ADD
             genericImport: 'ready'
         },
         timestamp: new Date().toISOString()

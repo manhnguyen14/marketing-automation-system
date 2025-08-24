@@ -19,7 +19,7 @@ if (process.env.JWT_SECRET.length < 32) {
     process.exit(1);
 }
 
-// ✅ ADD: Email configuration validation
+// Email configuration validation
 function validateEmailConfig() {
     const emailErrors = [];
 
@@ -38,7 +38,9 @@ function validateEmailConfig() {
     }
 }
 
-// Run email validation
+// Pipeline configuration is handled by ./pipeline.js.js
+
+// Run validations
 validateEmailConfig();
 
 module.exports = {
@@ -54,9 +56,8 @@ module.exports = {
         poolMin: parseInt(process.env.DB_POOL_MIN) || 2,
         poolMax: parseInt(process.env.DB_POOL_MAX) || 10,
         acquireTimeout: parseInt(process.env.DB_ACQUIRE_TIMEOUT) || 30000,
-        ssl: process.env.NODE_ENV === 'production' // Enable SSL in production
+        ssl: process.env.NODE_ENV === 'production'
     },
-    // ✅ ADD: Email configuration section
     email: {
         postmark: {
             token: process.env.POSTMARK_TOKEN,
@@ -76,22 +77,13 @@ module.exports = {
             requirePostmarkToken: true,
             requireFromEmail: true,
             maxSubjectLength: 255,
-            maxContentLength: 1000000 // 1MB
+            maxContentLength: 1000000
         }
-    },
-    // Data import configuration
-    dataImport: {
-        maxFileSize: parseInt(process.env.IMPORT_MAX_FILE_SIZE) || 2097152, // 2MB default
-        maxFileSizeMB: ((parseInt(process.env.IMPORT_MAX_FILE_SIZE) || 2097152) / 1024 / 1024).toFixed(1),
-        batchSize: parseInt(process.env.IMPORT_BATCH_SIZE) || 100,
-        timeoutMinutes: parseInt(process.env.IMPORT_TIMEOUT_MINUTES) || 10,
-        allowedFormats: ['.csv'],
-        allowedMimeTypes: ['text/csv', 'application/csv', 'text/plain'],
-        supportedEntities: ['customers', 'books'] // Add new entities here
     },
     external: {
         postmarkToken: process.env.POSTMARK_TOKEN,
-        geminiApiKey: process.env.GEMINI_API_KEY
+        geminiApiKey: process.env.GEMINI_API_KEY,
+        geminiTimeout: parseInt(process.env.GEMINI_TIMEOUT_SECONDS) || 30
     },
     scheduler: {
         jobTimeoutSeconds: parseInt(process.env.JOB_TIMEOUT_SECONDS) || 60,

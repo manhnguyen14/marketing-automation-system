@@ -242,7 +242,6 @@ After successful deployment, you're ready to begin developing the next phases:
 1. **Database Integration**: PostgreSQL setup for persistent data
 2. **Email System**: Postmark integration for email sending
 3. **AI Integration**: Gemini AI for content personalization
-4. **Job Scheduler**: Background task processing
 5. **Campaign Management**: Marketing automation workflows
 
 The current MVP provides the authentication foundation for all future features.

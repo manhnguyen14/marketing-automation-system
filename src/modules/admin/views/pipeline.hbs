@@ -1,0 +1,325 @@
+<div class="pipeline-container">
+    <div class="page-header pipeline">
+        <h1>Pipeline Management</h1>
+        <p>Manage marketing automation pipelines and email campaigns</p>
+    </div>
+
+    <div class="page-content">
+        {{!-- Flash Messages --}}
+        {{#if success}}
+            <div class="alert alert-success">{{success}}</div>
+        {{/if}}
+        {{#if error}}
+            <div class="alert alert-error">{{error}}</div>
+        {{/if}}
+        {{#if warning}}
+            <div class="alert alert-warning">{{warning}}</div>
+        {{/if}}
+
+        {{!-- Pipeline Statistics --}}
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{statistics.totalPipelines}}</div>
+                <div class="stat-label">Total Pipelines</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{statistics.runningPipelines}}</div>
+                <div class="stat-label">Running Now</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{statistics.totalExecutions}}</div>
+                <div class="stat-label">Total Executions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{statistics.successRate}}%</div>
+                <div class="stat-label">Success Rate</div>
+            </div>
+        </div>
+
+        {{!-- Available Pipelines --}}
+        <div class="card">
+            <div class="card-header">
+                <h3>Available Pipelines</h3>
+            </div>
+            <div class="card-content">
+                {{#if pipelines}}
+                    <div class="pipeline-list">
+                        {{#each pipelines}}
+                            <div class="pipeline-item">
+                                <div class="pipeline-info">
+                                    <h4>{{displayName}}</h4>
+                                    <p>{{description}}</p>
+                                    <div class="pipeline-meta">
+                                <span class="badge badge-{{#if (eq templateType 'ai_generated')}}warning{{else}}info{{/if}}">
+                                    {{#if (eq templateType 'ai_generated')}}AI Generated{{else}}Predefined{{/if}}
+                                </span>
+                                        {{#if requiresReview}}
+                                            <span class="badge badge-warning">Requires Review</span>
+                                        {{/if}}
+                                        <span class="pipeline-category">{{category}}</span>
+                                    </div>
+                                </div>
+                                <div class="pipeline-actions">
+                                    {{#if canExecute}}
+                                        <form method="POST" action="/admin/pipelines/{{name}}/execute" style="display: inline;">
+                                            <button type="submit" class="btn btn-success"
+                                                    onclick="return confirm('Execute {{displayName}} pipeline?');">
+                                                Run Pipeline
+                                            </button>
+                                        </form>
+                                    {{else}}
+                                        <button class="btn btn-secondary" disabled>
+                                            {{#if isRunning}}Running...{{else}}Cannot Execute{{/if}}
+                                        </button>
+                                    {{/if}}
+                                </div>
+                            </div>
+                        {{/each}}
+                    </div>
+                {{else}}
+                    <div class="empty-state">
+                        <p>No pipelines available</p>
+                    </div>
+                {{/if}}
+            </div>
+        </div>
+
+        {{!-- Quick Actions --}}
+        <div class="grid grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Queue Management</h3>
+                </div>
+                <div class="card-content">
+                    <div class="queue-stats">
+                        <div class="queue-stat">
+                            <span class="stat-number">{{templateGeneration.pending.waitingGeneration}}</span>
+                            <span class="stat-label">Waiting Generation</span>
+                        </div>
+                        <div class="queue-stat">
+                            <span class="stat-number">{{templateGeneration.pending.pendingReview}}</span>
+                            <span class="stat-label">Pending Review</span>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" class="btn btn-secondary" onclick="window.location.href='/admin/pipelines/queue'">Manage Queue</button>
+                        {{#unless templateGeneration.processing}}
+                            <form method="POST" action="/admin/pipelines/generate-templates" style="display: inline;">
+                                <button type="submit" class="btn btn-secondary">Generate Templates</button>
+                            </form>
+                        {{else}}
+                            <button class="btn btn-secondary" disabled>Generating...</button>
+                        {{/unless}}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Recent Activity</h3>
+                </div>
+                <div class="card-content">
+                    {{#if recentExecutions}}
+                        <div class="execution-list">
+                            {{#each recentExecutions}}
+                                <div class="execution-item">
+                                    <div class="execution-info">
+                                        <strong>{{pipelineName}}</strong>
+                                        <span class="execution-time">{{formatDate createdAt 'datetime'}}</span>
+                                    </div>
+                                    <div class="execution-status">
+                                        {{#if (eq status 'SUCCESS')}}
+                                            <span class="badge badge-success">Success</span>
+                                        {{else if (eq status 'FAILED')}}
+                                            <span class="badge badge-error">Failed</span>
+                                        {{else}}
+                                            <span class="badge badge-warning">Running</span>
+                                        {{/if}}
+                                        {{#if queueItemsCreated}}
+                                            <span class="queue-items">{{queueItemsCreated}} items</span>
+                                        {{/if}}
+                                    </div>
+                                </div>
+                            {{/each}}
+                        </div>
+                    {{else}}
+                        <div class="empty-state">
+                            <p>No recent executions</p>
+                        </div>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .pipeline-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .page-header.pipeline {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-align: center;
+        border: 1px solid #e9ecef;
+    }
+
+    .stat-number {
+        display: block;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .pipeline-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .pipeline-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        background: #f8f9fa;
+    }
+
+    .pipeline-info h4 {
+        margin: 0 0 0.5rem 0;
+        color: #343a40;
+    }
+
+    .pipeline-info p {
+        margin: 0 0 0.5rem 0;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .pipeline-meta {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .pipeline-category {
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-transform: capitalize;
+    }
+
+    .queue-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .queue-stat {
+        text-align: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+    }
+
+    .queue-stat .stat-number {
+        font-size: 1.5rem;
+        color: #667eea;
+    }
+
+    .queue-stat .stat-label {
+        font-size: 0.8rem;
+    }
+
+    .execution-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .execution-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+
+    .execution-info strong {
+        display: block;
+        font-size: 0.9rem;
+    }
+
+    .execution-time {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .execution-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .queue-items {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 768px) {
+        .pipeline-item {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .pipeline-actions {
+            text-align: center;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .queue-stats {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

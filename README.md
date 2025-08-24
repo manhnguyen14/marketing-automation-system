@@ -1,281 +1,256 @@
 # Marketing Automation System
 
-A Node.js-based marketing automation platform designed for ebook platforms to integrate with external data sources, generate customer insights, and execute personalized email campaigns through code-based automation workflows.
+A Node.js-based marketing automation platform with pipeline-driven email campaigns, AI content generation, and customer management.
 
-## Current System Status
+## Features
 
-### ✅ Completed Features
-- **Authentication System**: Admin login/logout with JWT-based security
-- **Database Integration**: PostgreSQL with automated migrations and data models
-- **Admin Interface**: Professional responsive dashboard with navigation
-- **Customer Management**: Full CRUD operations for marketing targets
-- **Book Catalog**: Complete book management system
-- **Reading Analytics**: Customer behavior tracking and analysis
-- **Migration System**: Automated database schema management
-- **Development Tools**: Database seeding, status checking, and reset capabilities
+- **Pipeline-Based Marketing Automation**: Code-based workflows for customer engagement
+- **AI Content Generation**: Personalized email content using AI with admin approval
+- **Customer Management**: Import and manage customer data with segmentation
+- **Email Campaign Management**: Template-based email sending with tracking
+- **Admin Interface**: Web-based dashboard for managing all system operations
 
-### 📋 Architecture
-- **Modular Design**: Clear separation between core infrastructure and business features
-- **Database-Driven**: PostgreSQL with comprehensive data models and relationships
-- **Scalable Foundation**: Ready for email campaigns, job scheduling, and AI integration
+## System Architecture
 
-## Technology Stack
+### Core Modules
+- **Database**: PostgreSQL with migrations and data models
+- **Authentication**: JWT-based admin authentication
+- **Email Service**: Postmark integration for reliable email delivery
+- **Pipeline System**: Marketing automation workflows with queue processing
 
-- **Backend**: Node.js + Express.js
-- **Database**: PostgreSQL with SSL support
-- **Authentication**: JWT with environment variables
-- **View Engine**: Handlebars (HBS)
-- **Architecture**: Layered modular design with clear dependencies
+### Feature Modules
+- **Admin Interface**: Web dashboard for system management
+- **Data Import**: CSV-based customer and book data import
+- **Template Management**: Email template creation and approval workflow
 
 ## Quick Start
 
 ### Prerequisites
-- Node.js 18+ installed
-- PostgreSQL 13+ installed and running
-- npm or yarn package manager
+- Node.js 16+
+- PostgreSQL 13+
+- Postmark account for email sending
 
-### Setup Instructions
+### Installation
 
-1. **Clone and install dependencies**:
-   ```bash
-   git clone <repository>
-   cd marketing-automation-system
-   npm install
-   ```
-
-2. **Configure environment variables**:
-   ```bash
-   cp .env.example .env
-   ```
-   Edit `.env` file and update the credentials:
-   ```bash
-   # Authentication (required)
-   ADMIN_USERNAME=your_admin_username
-   ADMIN_PASSWORD=your_secure_password
-   JWT_SECRET=your_random_secret_key_at_least_32_characters
-
-   # Database (required for full functionality)
-   DATABASE_URL=postgresql://username:password@localhost:5432/marketing_automation
-
-   # Server configuration (optional)
-   PORT=3000
-   NODE_ENV=development
-   ```
-
-3. **Set up database**:
-   ```bash
-   # Create PostgreSQL database
-   createdb marketing_automation
-
-   # Run migrations to create tables
-   npm run db:migrate
-
-   # Add sample data (optional)
-   npm run db:seed
-   ```
-
-4. **Start the development server**:
-   ```bash
-   npm run dev
-   ```
-
-5. **Access the admin interface**:
-   - Open browser to: `http://localhost:3000`
-   - Login page: `http://localhost:3000/admin/login`
-   - Use credentials from your `.env` file
-
-## Database Management
-
-### Available Commands
-
+1. Clone the repository:
 ```bash
-# Database operations
-npm run db:migrate      # Run pending migrations
-npm run db:status       # Check database and migration status
-npm run db:reset        # Reset database (WARNING: deletes all data)
-npm run db:seed         # Add sample data for development
-
-# Application
-npm start              # Production server
-npm run dev           # Development server with auto-reload
+git clone <repository-url>
+cd marketing-automation-system
 ```
 
-### Database Schema
+2. Install dependencies:
+```bash
+npm install
+```
 
-The system includes comprehensive data models:
+3. Create environment file:
+```bash
+cp .env.example .env
+```
 
-- **Customers**: Marketing targets with interests information
-- **Books**: Ebook catalog with topics and metadata
-- **Jobs**: Scheduled task management (ready for email automation)
-- **Email Records**: Campaign tracking and analytics (ready for integration)
+4. Update `.env` with your configuration:
+```bash
+# Database
+DATABASE_URL=postgresql://username:password@localhost:5432/marketing_automation
+
+# Admin Access
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your_secure_password
+JWT_SECRET=your_jwt_secret_32_characters_minimum
+
+# Email Service
+POSTMARK_TOKEN=your_postmark_server_token
+POSTMARK_FROM_EMAIL=noreply@yourdomain.com
+
+# AI Service (Optional)
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+5. Initialize database:
+```bash
+npm run db:migrate
+```
+
+6. Start the server:
+```bash
+npm start
+```
+
+7. Access the admin interface:
+```
+http://localhost:3000/admin/login
+```
+
+## Pipeline System
+
+### Available Pipelines
+
+**Daily Motivation Pipeline** (`DAILY_MOTIVATION`)
+- **Type**: AI-generated templates
+- **Target**: Engaged readers with recent activity
+- **Process**: AI generates personalized motivation emails → Admin review → Scheduled sending
+
+**New Book Release Pipeline** (`NEW_BOOK_RELEASE`)
+- **Type**: Predefined templates
+- **Target**: Customers interested in book topics/genres
+- **Process**: Customer selection → Immediate email sending using approved template
+
+### Pipeline Workflow
+
+1. **Pipeline Execution**: Admin triggers pipeline or scheduled execution
+2. **Customer Selection**: Pipeline selects target customers based on criteria
+3. **Queue Item Creation**: Creates email queue items with status:
+   - Predefined templates: `SCHEDULED` (ready to send)
+   - AI templates: `WAIT_GENERATE_TEMPLATE`
+4. **Template Generation** (AI only): Creates personalized content → `PENDING_REVIEW`
+5. **Admin Review** (AI only): Approve/reject templates → `SCHEDULED`
+6. **Email Sending**: Queue processor sends `SCHEDULED` emails → `SENT`
+
+### Creating Custom Pipelines
+
+1. Create pipeline class extending `PipelineInterface`:
+```javascript
+const PipelineInterface = require('../core/pipeline.js/pipelines/PipelineInterface');
+
+class CustomPipeline extends PipelineInterface {
+    constructor() {
+        super();
+        this.pipelineName = 'CUSTOM_PIPELINE';
+        this.templateType = 'predefined'; // or 'ai_generated'
+        this.defaultTemplateId = 123; // for predefined templates
+    }
+
+    async runPipeline() {
+        return await this.createQueueItems();
+    }
+
+    async createQueueItems() {
+        // Select target customers
+        const customers = await this.selectTargetCustomers();
+        
+        // Create queue items
+        const queueItems = customers.map(customer => 
+            this.createQueueItemData(customer, {
+                variables: { /* template variables */ },
+                tag: 'custom_tag'
+            })
+        );
+        
+        return await this.bulkCreateQueueItems(queueItems);
+    }
+
+    async selectTargetCustomers() {
+        // Implement customer selection logic
+        const customerService = this.getCustomerService();
+        return await customerService.getActiveCustomers({ limit: 100 });
+    }
+}
+```
+
+2. Register in pipeline registry (`src/core/pipeline/services/pipelineRegistry.js`)
+
+## API Endpoints
+
+### Pipeline Management
+- `GET /api/pipeline/pipelines` - List available pipelines
+- `POST /api/pipeline/pipelines/{name}/execute` - Execute pipeline
+- `GET /api/pipeline/dashboard` - Pipeline dashboard data
+- `GET /api/pipeline/queue` - View email queue
+- `GET /api/pipeline/queue/review` - Templates awaiting review
+
+### Email Operations
+- `POST /api/email/send` - Send single email
+- `POST /api/email/send-batch` - Send batch emails
+- `POST /api/email/process-queue` - Process email queue
+- `POST /api/email/preview` - Preview template
+
+### Template Management
+- `GET /api/templates` - List templates
+- `POST /api/templates` - Create template
+- `PUT /api/templates/{id}` - Update template
+
+### Data Import
+- `POST /api/data-import/customers/upload` - Import customer data
+- `GET /api/data-import/customers/template` - Download CSV template
+
+## Database Schema
+
+### Core Tables
+- `customers` - Customer information and preferences
+- `books` - Book catalog for ebook platform
+- `email_templates` - Email templates (predefined and AI-generated)
+- `email_records` - Email delivery tracking
+- `email_queue_items` - Pipeline email queue
+- `pipeline_execution_log` - Pipeline run history
+
+## Development
+
+### Running in Development
+```bash
+npm run dev          # Start with nodemon
+npm run db:migrate   # Run database migrations  
+npm run db:reset     # Reset database (development only)
+npm run db:seed      # Add sample data
+```
+
+### Environment Variables
+
+**Required:**
+- `ADMIN_USERNAME` - Admin login username
+- `ADMIN_PASSWORD` - Admin login password
+- `JWT_SECRET` - JWT signing secret (32+ characters)
+- `DATABASE_URL` - PostgreSQL connection string
+
+**Email Service:**
+- `POSTMARK_TOKEN` - Postmark server token
+- `POSTMARK_FROM_EMAIL` - Default sender email
+
+**Pipeline System:**
+- `MAX_TEMPLATE_RETRIES=3` - AI generation retry limit
+- `QUEUE_SCAN_INTERVAL_SECONDS=60` - Background queue processing
+- `GEMINI_API_KEY` - Google Gemini AI API key
+
+**Development:**
+- `PIPELINE_DEBUG=true` - Enable debug logging
+- `MOCK_AI_GENERATION=true` - Use mock AI content
+
+## Deployment
+
+### Railway Platform
+1. Connect GitHub repository to Railway
+2. Set environment variables in Railway dashboard
+3. Deploy automatically on push to main branch
+
+### Environment Setup
+- `NODE_ENV=production`
+- `DATABASE_URL=postgresql://...` (Railway PostgreSQL)
+- Configure all required environment variables
 
 ## Project Structure
 
 ```
-marketing-automation-system/
-├── src/
-│   ├── core/                     # Core system infrastructure
-│   │   ├── auth/                 # Authentication system
-│   │   └── database/             # Database integration
-│   │       ├── models/           # Data models (Customer, Book, etc.)
-│   │       ├── services/         # Database operations
-│   │       ├── migrations/       # SQL schema files
-│   │       └── migrationRunner.js # Migration management
-│   ├── modules/
-│   │   └── admin/                # Admin interface
-│   │       ├── controllers/      # UI controllers
-│   │       ├── views/            # Handlebars templates
-│   │       └── routes/           # Route definitions
-│   ├── shared/
-│   │   └── middleware/           # Shared utilities
-│   ├── config/                   # Configuration management
-│   └── app.js                    # Main application
-├── scripts/                      # Database management scripts
-├── public/
-│   └── css/                      # Admin interface styles
-└── README.md
+src/
+├── core/                    # Core system modules
+│   ├── auth/               # Authentication
+│   ├── database/           # Database models and services
+│   ├── email/              # Email service integration
+│   └── pipeline/           # Pipeline automation system
+├── modules/                # Feature modules
+│   ├── admin/              # Admin web interface
+│   ├── data-import/        # CSV data import
+│   └── template-management/ # Template management
+├── shared/                 # Shared utilities
+├── config/                 # Configuration management
+└── app.js                  # Application entry point
 ```
 
-## API Endpoints
+## Contributing
 
-### System APIs
-- `GET /api/health` - System health check with database status
-- `POST /api/auth/login` - Admin authentication
-- `GET /api/auth/logout` - Admin logout
+1. Follow existing code patterns and conventions
+2. Add comprehensive tests for new features
+3. Update documentation for API changes
+4. Ensure database migrations are reversible
 
-### Admin Interface
-- `GET /admin/login` - Login page
-- `GET /admin/dashboard` - Admin dashboard (protected)
-- `GET /` - Redirects to dashboard
+## License
 
-## Testing the Implementation
-
-1. **Start the server**: `npm run dev`
-2. **Check database**: `npm run db:status`
-3. **Navigate to**: `http://localhost:3000`
-4. **Login with**: Credentials from your `.env` file
-5. **Verify features**:
-   - ✅ Authentication system works
-   - ✅ Database connection is healthy
-   - ✅ Admin dashboard loads
-   - ✅ Sample data is visible (if seeded)
-
-## Data Management
-
-### Sample Data Commands
-
-```bash
-# Add sample customers, books, and reading activities
-npm run db:seed
-
-# Check what data exists
-npm run db:status
-
-# Reset everything and start fresh
-npm run db:reset
-npm run db:migrate
-npm run db:seed
-```
-
-### Customer Data Structure
-
-The system tracks marketing-relevant customer data:
-- Email address (unique identifier)
-- Name for personalization
-- Topics of interest for content targeting
-- Status (active, inactive, blacklisted)
-- Reading behavior and engagement history
-
-## Next Development Phases
-
-The current foundation supports future implementation of:
-
-- 📧 **Email Management**: Postmark integration for campaign delivery
-- 🤖 **AI Content Generation**: Gemini AI for personalized email content
-- ⏰ **Job Scheduling**: Automated campaign execution and timing
-- 📊 **Analytics Dashboard**: Campaign performance and customer insights
-- 🔗 **External Integrations**: CRM synchronization and data imports
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `ADMIN_USERNAME` | Admin login username | Yes | - |
-| `ADMIN_PASSWORD` | Admin login password | Yes | - |
-| `JWT_SECRET` | JWT token signing key (32+ chars) | Yes | - |
-| `DATABASE_URL` | PostgreSQL connection string | Yes* | - |
-| `PORT` | Server port | No | 3000 |
-| `NODE_ENV` | Environment mode | No | development |
-
-*Required for full functionality. App runs in limited mode without database.
-
-### Database Configuration
-
-**Local Development**:
-```bash
-DATABASE_URL=postgresql://username:password@localhost:5432/marketing_automation
-```
-
-**Railway Production**:
-```bash
-DATABASE_URL=postgresql://user:pass@hostname.railway.app:5432/railway?sslmode=require
-```
-
-## Security Features
-
-- JWT tokens with 24-hour expiration
-- HTTP-only secure cookies in production
-- SSL/TLS database connections
-- Environment-based credential management
-- Input validation and SQL injection prevention
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Database connection fails**
-   - Verify PostgreSQL is running
-   - Check DATABASE_URL format
-   - Ensure database exists: `createdb marketing_automation`
-
-2. **Migrations fail**
-   - Check database permissions
-   - Verify connection string
-   - Run `npm run db:status` to diagnose
-
-3. **Can't login**
-   - Verify credentials in `.env` file
-   - Check browser console for errors
-   - Ensure JWT_SECRET is at least 32 characters
-
-4. **Sample data issues**
-   - Run migrations first: `npm run db:migrate`
-   - Check database status: `npm run db:status`
-   - Reset if needed: `npm run db:reset`
-
-### Database Debugging
-
-```bash
-# Check overall system status
-npm run db:status
-
-# View migration history
-npm run db:migrate
-
-# Reset and rebuild (destructive)
-npm run db:reset
-npm run db:migrate
-npm run db:seed
-```
-
-## Development Guidelines
-
-This project follows modular architecture principles:
-- **Core modules**: Essential system infrastructure (auth, database)
-- **Feature modules**: Business functionality (admin interface)
-- **Shared services**: Common utilities and middleware
-- **Clear dependencies**: Features depend on core, never vice versa
-
-Ready for advanced marketing automation features including email campaigns, AI content generation, and comprehensive customer journey management.
+This project is proprietary software. All rights reserved.

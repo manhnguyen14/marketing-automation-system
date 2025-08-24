@@ -9,19 +9,21 @@
             <h3>System Status</h3>
             <p class="status-ok">✅ Authentication System Working</p>
             <p class="status-ok">✅ Admin Interface Active</p>
+            <p class="status-ok">✅ Database Connected</p>
+            <p class="status-ok">✅ Email Service Ready</p>
         </div>
 
         <div class="simple-card">
-            <h3>Next Steps</h3>
-            <p>The marketing automation system is ready for development.</p>
-            <p>Future features will be added here.</p>
+            <h3>System Information</h3>
+            <p>Marketing automation system with pipeline-based email campaigns.</p>
+            <p>Features: Customer management, email templates, automated pipelines, AI content generation.</p>
         </div>
     </div>
 </div>
 
 <style>
     .dashboard-container {
-        max-width: 800px;
+        max-width: 1000px;
         margin: 0 auto;
         padding: 2rem;
     }
@@ -43,6 +45,7 @@
     .dashboard-content {
         display: grid;
         gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     }
 
     .simple-card {
@@ -56,11 +59,97 @@
     .simple-card h3 {
         margin-top: 0;
         color: #343a40;
+        margin-bottom: 1rem;
     }
 
     .status-ok {
         color: #28a745;
         margin: 0.5rem 0;
         font-weight: 500;
+    }
+
+    /* ✅ ADD: Pipeline overview styles */
+    .pipeline-overview {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .pipeline-stat {
+        text-align: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+    }
+
+    .stat-number {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .pipeline-actions {
+        text-align: center;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 0.75rem 1rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        color: white;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 1rem;
+        }
+
+        .dashboard-content {
+            grid-template-columns: 1fr;
+        }
+
+        .pipeline-overview {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
     }
 </style>

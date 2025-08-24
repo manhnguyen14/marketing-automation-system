@@ -574,7 +574,6 @@ get models() {
   return {
     Customer,
     Book,
-    Job,
     EmailRecord,
     OwnedBook  // ✅ ADD THIS LINE
   };

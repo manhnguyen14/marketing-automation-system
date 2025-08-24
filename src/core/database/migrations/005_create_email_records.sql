@@ -30,7 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_email_records_template_id ON email_records(templa
 -- Add comments for documentation
 COMMENT ON TABLE email_records IS 'Email campaign execution and tracking records';
 COMMENT ON COLUMN email_records.email_id IS 'Primary key for email record identification';
-COMMENT ON COLUMN email_records.job_id IS 'Foreign key reference to jobs table (nullable)';
+COMMENT ON COLUMN email_records.job_id IS 'Foreign key reference to email queue item (nullable)';
 COMMENT ON COLUMN email_records.pipeline_id IS 'Identifier for marketing pipeline that sent email';
 COMMENT ON COLUMN email_records.recipient_id IS 'Foreign key reference to customers table';
 COMMENT ON COLUMN email_records.email_address IS 'Recipient email address (denormalized for tracking)';

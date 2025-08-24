@@ -1,27 +1,29 @@
 const express = require('express');
 const router = express.Router();
+const { authMiddleware } = require('../../auth');
 const emailController = require('../controllers/emailController');
-const { requireAuth } = require('../../auth/middleware/authMiddleware');
 
-// Apply authentication middleware to all email routes
-router.use(requireAuth);
+/**
+ * Email Service Routes
+ * All routes require authentication
+ */
 
 // Email sending endpoints
-router.post('/send-batch', emailController.sendBatchEmails);
-router.post('/preview-template', emailController.previewTemplate);
-router.post('/test-send', emailController.testEmailSending);
+router.post('/send', authMiddleware.requireAuth, emailController.sendSingleEmail);
+router.post('/send-batch', authMiddleware.requireAuth, emailController.sendBatchEmails);
 
-// Template management endpoints
-router.get('/templates', emailController.getAvailableTemplates);
-router.get('/templates/:templateId', emailController.getTemplateDetails);
-router.post('/templates/:templateId/validate-variables', emailController.validateTemplateVariables);
+// Template preview
+router.post('/preview', authMiddleware.requireAuth, emailController.previewTemplate);
 
-// Email tracking and statistics endpoints
-router.get('/batch/:batchId/stats', emailController.getBatchStats);
-router.post('/delivery-status', emailController.getEmailDeliveryStatus);
+// Queue processing endpoints
+router.post('/process-queue', authMiddleware.requireAuth, emailController.processQueue);
+router.get('/queue-status', authMiddleware.requireAuth, emailController.getQueueStatus);
 
-// Service monitoring endpoints
-router.get('/status', emailController.getServiceStatus);
-router.get('/health', emailController.healthCheck);
+// Statistics and monitoring
+router.get('/batch/:batchId/stats', authMiddleware.requireAuth, emailController.getBatchStats);
+
+// Testing and health
+router.post('/test', authMiddleware.requireAuth, emailController.testEmailSending);
+router.get('/health', emailController.getServiceHealth);
 
 module.exports = router;

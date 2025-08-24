@@ -4,15 +4,18 @@ const migrationRunner = require('./migrationRunner');
 // Models
 const Customer = require('./models/Customer');
 const Book = require('./models/Book');
-const Job = require('./models/Job');
 const EmailRecord = require('./models/EmailRecord');
-const EmailTemplate = require('./models/EmailTemplate'); // ✅ ADD
+const EmailTemplate = require('./models/EmailTemplate');
+const EmailQueueItem = require('./models/EmailQueueItem'); // ✅ ADD
+const PipelineExecutionLog = require('./models/PipelineExecutionLog'); // ✅ ADD
 
 // Services
 const customerService = require('./services/customerService');
 const bookService = require('./services/bookService');
-const emailTemplateService = require('./services/emailTemplateService'); // ✅ ADD
-const emailRecordService = require('./services/emailRecordService'); // ✅ ADD
+const emailTemplateService = require('./services/emailTemplateService');
+const emailRecordService = require('./services/emailRecordService');
+const emailQueueService = require('./services/emailQueueService'); // ✅ ADD
+const pipelineExecutionService = require('./services/pipelineExecutionService'); // ✅ ADD
 
 class Database {
     constructor() {
@@ -32,14 +35,16 @@ class Database {
                 return false;
             }
 
+            // Run migrations when initialize database
+            await migrationRunner.runMigrations();
+
             // Initialize services with connection
             await customerService.initialize();
             await bookService.initialize();
-            await emailTemplateService.initialize(); // ✅ ADD
-            await emailRecordService.initialize(); // ✅ ADD
-
-            // Run migrations when initialize database
-            await migrationRunner.runMigrations();
+            await emailTemplateService.initialize();
+            await emailRecordService.initialize();
+            await emailQueueService.initialize(); // ✅ ADD
+            await pipelineExecutionService.initialize(); // ✅ ADD
 
             this.isInitialized = true;
             console.log('✅ Database initialization completed');
@@ -100,7 +105,6 @@ class Database {
         return bookService;
     }
 
-    // ✅ ADD: Email services access methods
     get emailTemplates() {
         if (!emailTemplateService.getPool()) {
             emailTemplateService.initialize();
@@ -115,14 +119,30 @@ class Database {
         return emailRecordService;
     }
 
+    // ✅ ADD: Pipeline services access methods
+    get emailQueue() {
+        if (!emailQueueService.getPool()) {
+            emailQueueService.initialize();
+        }
+        return emailQueueService;
+    }
+
+    get pipelineExecutions() {
+        if (!pipelineExecutionService.getPool()) {
+            pipelineExecutionService.initialize();
+        }
+        return pipelineExecutionService;
+    }
+
     // Model access
     get models() {
         return {
             Customer,
             Book,
-            Job,
             EmailRecord,
-            EmailTemplate // ✅ ADD
+            EmailTemplate,
+            EmailQueueItem, // ✅ ADD
+            PipelineExecutionLog // ✅ ADD
         };
     }
 
@@ -136,19 +156,27 @@ class Database {
             const [
                 customerCount,
                 bookCount,
-                emailTemplateCount, // ✅ ADD
+                emailTemplateCount,
+                queueItemCount, // ✅ ADD
+                pipelineExecutionCount, // ✅ ADD
                 migrationStatus
             ] = await Promise.all([
                 this.customers.getCustomerCount(),
                 this.books.getBookCount(),
-                this.emailTemplates.getTemplateCount(), // ✅ ADD
+                this.emailTemplates.getTemplateCount(),
+                this.emailQueue.getQueueCount(), // ✅ ADD
+                this.pipelineExecutions.getExecutionStats().then(stats =>
+                    stats.reduce((sum, stat) => sum + parseInt(stat.count), 0)
+                ).catch(() => 0), // ✅ ADD
                 migrationRunner.getMigrationStatus()
             ]);
 
             return {
                 customers: customerCount,
                 books: bookCount,
-                emailTemplates: emailTemplateCount, // ✅ ADD
+                emailTemplates: emailTemplateCount,
+                queueItems: queueItemCount, // ✅ ADD
+                pipelineExecutions: pipelineExecutionCount, // ✅ ADD
                 migrations: migrationStatus,
                 connectionStatus: await this.testConnection()
             };
@@ -170,14 +198,17 @@ module.exports.migrationRunner = migrationRunner;
 module.exports.models = {
     Customer,
     Book,
-    Job,
     EmailRecord,
-    EmailTemplate // ✅ ADD
+    EmailTemplate,
+    EmailQueueItem, // ✅ ADD
+    PipelineExecutionLog // ✅ ADD
 };
 
 module.exports.services = {
     customerService,
     bookService,
-    emailTemplateService, // ✅ ADD
-    emailRecordService // ✅ ADD
+    emailTemplateService,
+    emailRecordService,
+    emailQueueService, // ✅ ADD
+    pipelineExecutionService // ✅ ADD
 };

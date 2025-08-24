@@ -2,11 +2,13 @@ const postmarkService = require('./postmarkService');
 const emailTemplateService = require('../../database/services/emailTemplateService');
 const emailRecordService = require('../../database/services/emailRecordService');
 const customerService = require('../../database/services/customerService');
+const emailQueueService = require('../../database/services/emailQueueService'); // ✅ ADD
 const config = require('../../../config');
 
 class EmailSendService {
     constructor() {
         this.isInitialized = false;
+        this.queueProcessing = false; // ✅ ADD: Track queue processing state
     }
 
     async initialize() {
@@ -20,7 +22,175 @@ class EmailSendService {
         }
     }
 
-    // Send batch emails using template and recipient data
+    // ✅ ADD: Process email queue for scheduled items
+    async processEmailQueue(batchSize = 50) {
+        if (this.queueProcessing) {
+            console.log('⚠️ Queue processing already in progress, skipping scan');
+            return { skipped: true, reason: 'Already processing' };
+        }
+
+        this.queueProcessing = true;
+        const startTime = Date.now();
+
+        try {
+            console.log('🔄 Processing email queue...');
+
+            // Get scheduled items ready to send
+            const scheduledItems = await emailQueueService.getScheduledItems(new Date(), batchSize);
+
+            if (scheduledItems.length === 0) {
+                console.log('✅ No emails ready to send');
+                return { processed: 0, message: 'No emails ready to send' };
+            }
+
+            console.log(`📧 Found ${scheduledItems.length} emails ready to send`);
+
+            const results = {
+                processed: 0,
+                succeeded: 0,
+                failed: 0,
+                errors: []
+            };
+
+            // Process each queue item
+            for (const queueItem of scheduledItems) {
+                try {
+                    results.processed++;
+                    await this.sendQueuedEmail(queueItem);
+                    results.succeeded++;
+
+                    console.log(`✅ Sent email for queue item ${queueItem.id}`);
+                } catch (error) {
+                    results.failed++;
+                    results.errors.push({
+                        queueItemId: queueItem.id,
+                        customerId: queueItem.customerId,
+                        error: error.message
+                    });
+
+                    console.error(`❌ Email sending failed for queue item ${queueItem.id}:`, error.message);
+
+                    // Mark as failed in queue
+                    await emailQueueService.markFailed(queueItem.id, error.message, 'FAILED_SEND');
+                }
+
+                // Small delay between emails
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+
+            const processingTime = Date.now() - startTime;
+            console.log(`🎉 Queue processing completed in ${(processingTime / 1000).toFixed(2)}s`);
+            console.log(`   - Processed: ${results.processed}`);
+            console.log(`   - Succeeded: ${results.succeeded}`);
+            console.log(`   - Failed: ${results.failed}`);
+
+            return {
+                ...results,
+                processingTimeMs: processingTime,
+                batchSize: scheduledItems.length
+            };
+
+        } catch (error) {
+            console.error('❌ Queue processing failed:', error.message);
+            throw error;
+        } finally {
+            this.queueProcessing = false;
+        }
+    }
+
+    // ✅ ADD: Send individual queued email
+    async sendQueuedEmail(queueItem) {
+        console.log(`📤 Sending queued email for customer ${queueItem.customerId}, template ${queueItem.templateId}`);
+
+        // Get customer details
+        const customer = await customerService.getCustomerById(queueItem.customerId);
+        if (!customer) {
+            throw new Error('Customer not found');
+        }
+
+        // Get and validate template
+        const template = await emailTemplateService.getTemplateById(queueItem.templateId);
+        if (!template) {
+            throw new Error('Template not found');
+        }
+
+        if (!template.canBeUsedForSending()) {
+            throw new Error(`Template ${template.name} is not approved for sending`);
+        }
+
+        // Merge variables with customer data
+        const variables = {
+            customerName: customer.name || 'Reader',
+            customerEmail: customer.email,
+            ...queueItem.variables
+        };
+
+        // Render template with variables
+        const renderedContent = template.renderComplete(variables);
+
+        // Create email record first
+        const emailRecord = {
+            job_id: queueItem.id, // Use queue item ID as job ID
+            pipeline_id: queueItem.pipelineName,
+            recipient_id: customer.customerId,
+            email_address: customer.email,
+            subject: renderedContent.subject,
+            content_type: template.templateType,
+            template_id: queueItem.templateId,
+            campaign_id: queueItem.pipelineName,
+            processed_html_content: renderedContent.html,
+            processed_text_content: renderedContent.text,
+            variables_used: variables,
+            tag_string: queueItem.tag,
+            metadata: { queueItemId: queueItem.id }
+        };
+
+        const emailRecordResult = await emailRecordService.createEmailRecord(emailRecord);
+
+        // Send email directly via Postmark
+        const emailData = {
+            to: customer.email,
+            subject: renderedContent.subject,
+            htmlBody: renderedContent.html,
+            textBody: renderedContent.text,
+            tag: queueItem.tag,
+            metadata: {
+                customerId: customer.customerId,
+                templateId: queueItem.templateId,
+                campaignId: queueItem.pipelineName,
+                queueItemId: queueItem.id,
+                emailRecordId: emailRecordResult.emailId
+            }
+        };
+
+        // Direct Postmark call
+        const postmarkResult = await postmarkService.sendEmail(emailData);
+
+        // Update email record with Postmark response
+        await emailRecordService.updatePostmarkResponse(emailRecordResult.emailId, postmarkResult);
+
+        if (postmarkResult.success) {
+            // Mark queue item as sent
+            await emailQueueService.markSent(queueItem.id);
+        } else {
+            throw new Error(postmarkResult.error || 'Email sending failed');
+        }
+
+        return {
+            success: postmarkResult.success,
+            emailRecordId: emailRecordResult.emailId,
+            postmarkMessageId: postmarkResult.messageId,
+            queueItemId: queueItem.id,
+            customerEmail: customer.email
+        };
+    }
+
+    // ✅ ADD: Get queue processing status
+    isQueueProcessing() {
+        return this.queueProcessing;
+    }
+
+    // Existing methods remain unchanged...
     async sendBatchEmailsWithTemplate(batchData) {
         try {
             const {
@@ -355,6 +525,7 @@ class EmailSendService {
         return {
             initialized: this.isInitialized,
             postmarkConnected: postmarkService.isInitialized,
+            queueProcessing: this.queueProcessing, // ✅ ADD
             timestamp: new Date().toISOString()
         };
     }

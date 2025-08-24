@@ -16,7 +16,7 @@ class DatabaseConnection {
                 max: config.database.poolMax,
                 acquireTimeoutMillis: config.database.acquireTimeout,
                 idleTimeoutMillis: 30000,
-                connectionTimeoutMillis: 10000
+                connectionTimeoutMillis: 20000
             };
 
             this.pool = new Pool(connectionConfig);

@@ -387,7 +387,7 @@ class EmailTemplateService {
             ORDER BY template_type, status
         `;
 
-        const result = await pool.query(query, values);
+        const result = await pool.query(query);
         return result.rows;
     }
 

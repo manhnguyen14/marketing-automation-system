@@ -1,7 +1,7 @@
 module.exports = {
     postmark: {
         token: process.env.POSTMARK_TOKEN,
-        fromEmail: process.env.POSTMARK_FROM_EMAIL || 'noreply@company.com',
+        fromEmail: `${process.env.POSTMARK_FROM_NAME || 'BH Team'} <${process.env.POSTMARK_FROM_EMAIL || 'manhnp@mpos.vn'}>`,
         apiUrl: 'https://api.postmarkapp.com'
     },
     batch: {

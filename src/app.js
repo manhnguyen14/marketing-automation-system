@@ -11,136 +11,78 @@ const config = require('./config');
 // Import core modules
 const { authController } = require('./core/auth');
 const database = require('./core/database');
-const emailModule = require('./core/email'); // ✅ ADD
+const emailModule = require('./core/email');
+const pipelineModule = require('./core/pipeline'); // ✅ ADD
 
 // Import feature modules
 const adminModule = require('./modules/admin');
 const dataImportModule = require('./modules/data-import');
-const templateManagementModule = require('./modules/template-management'); // ✅ ADD
+const templateManagementModule = require('./modules/template-management');
 const errorHandler = require('./shared/middleware/errorHandler');
 
 const app = express();
 
-// View engine setup
+// View engine setup (keeping existing handlebars helpers)
 app.engine('hbs', engine({
     defaultLayout: 'main',
     extname: '.hbs',
     layoutsDir: path.join(__dirname, 'modules/admin/views/layouts'),
     partialsDir: path.join(__dirname, 'modules/admin/views/partials'),
     helpers: {
-        // Equality helper
-        eq: function(a, b) {
-            return a === b;
-        },
-
-        // Not equal helper
-        ne: function(a, b) {
-            return a !== b;
-        },
-
-        // Greater than helper
-        gt: function(a, b) {
-            return a > b;
-        },
-
-        // Less than helper
-        lt: function(a, b) {
-            return a < b;
-        },
-
-        // Greater than or equal helper
-        gte: function(a, b) {
-            return a >= b;
-        },
-
-        // Less than or equal helper
-        lte: function(a, b) {
-            return a <= b;
-        },
-
-        // Or helper
-        or: function(a, b) {
-            return a || b;
-        },
-
-        // And helper
-        and: function(a, b) {
-            return a && b;
-        },
-
-        // Not helper
-        not: function(a) {
-            return !a;
-        },
-
-        // Contains helper
+        // ... keeping all existing helpers unchanged ...
+        eq: function(a, b) { return a === b; },
+        ne: function(a, b) { return a !== b; },
+        gt: function(a, b) { return a > b; },
+        lt: function(a, b) { return a < b; },
+        gte: function(a, b) { return a >= b; },
+        lte: function(a, b) { return a <= b; },
+        or: function(a, b) { return a || b; },
+        and: function(a, b) { return a && b; },
+        not: function(a) { return !a; },
         contains: function(array, item) {
             if (!array || !Array.isArray(array)) return false;
             return array.includes(item);
         },
-
-        // Length helper
         length: function(array) {
             if (!array) return 0;
             return Array.isArray(array) ? array.length : Object.keys(array).length;
         },
-
-        // Join helper for arrays
         join: function(array, separator) {
             if (!array || !Array.isArray(array)) return '';
             return array.join(separator || ', ');
         },
-
-        // Capitalize helper
         capitalize: function(str) {
             if (!str || typeof str !== 'string') return '';
             return str.charAt(0).toUpperCase() + str.slice(1);
         },
-
-        // Uppercase helper
         upper: function(str) {
             if (!str || typeof str !== 'string') return '';
             return str.toUpperCase();
         },
-
-        // Lowercase helper
         lower: function(str) {
             if (!str || typeof str !== 'string') return '';
             return str.toLowerCase();
         },
-
-        // Truncate helper
         truncate: function(str, length) {
             if (!str || typeof str !== 'string') return '';
             if (str.length <= length) return str;
             return str.substring(0, length) + '...';
         },
-
-        // Date formatting helper
         formatDate: function(date, format) {
             if (!date) return '';
             const d = new Date(date);
             if (isNaN(d.getTime())) return '';
 
             switch (format) {
-                case 'short':
-                    return d.toLocaleDateString();
-                case 'long':
-                    return d.toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    });
-                case 'time':
-                    return d.toLocaleTimeString();
-                case 'datetime':
-                    return d.toLocaleString();
-                default:
-                    return d.toLocaleDateString();
+                case 'short': return d.toLocaleDateString();
+                case 'long': return d.toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                });
+                case 'time': return d.toLocaleTimeString();
+                case 'datetime': return d.toLocaleString();
+                default: return d.toLocaleDateString();
             }
         },
-
-        // Number formatting helper
         formatNumber: function(num, decimals) {
             if (typeof num !== 'number') return num;
             if (decimals !== undefined) {
@@ -148,14 +90,10 @@ app.engine('hbs', engine({
             }
             return num.toLocaleString();
         },
-
-        // Percentage helper
         percentage: function(num, total) {
             if (!num || !total || total === 0) return '0%';
             return ((num / total) * 100).toFixed(1) + '%';
         },
-
-        // File size helper
         fileSize: function(bytes) {
             if (!bytes || bytes === 0) return '0 B';
             const k = 1024;
@@ -163,41 +101,24 @@ app.engine('hbs', engine({
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
         },
-
-        // JSON stringify helper (for debugging)
         json: function(obj) {
             return JSON.stringify(obj, null, 2);
         },
-
-        // Conditional block helper
         ifCond: function(v1, operator, v2, options) {
             switch (operator) {
-                case '==':
-                    return (v1 == v2) ? options.fn(this) : options.inverse(this);
-                case '===':
-                    return (v1 === v2) ? options.fn(this) : options.inverse(this);
-                case '!=':
-                    return (v1 != v2) ? options.fn(this) : options.inverse(this);
-                case '!==':
-                    return (v1 !== v2) ? options.fn(this) : options.inverse(this);
-                case '<':
-                    return (v1 < v2) ? options.fn(this) : options.inverse(this);
-                case '<=':
-                    return (v1 <= v2) ? options.fn(this) : options.inverse(this);
-                case '>':
-                    return (v1 > v2) ? options.fn(this) : options.inverse(this);
-                case '>=':
-                    return (v1 >= v2) ? options.fn(this) : options.inverse(this);
-                case '&&':
-                    return (v1 && v2) ? options.fn(this) : options.inverse(this);
-                case '||':
-                    return (v1 || v2) ? options.fn(this) : options.inverse(this);
-                default:
-                    return options.inverse(this);
+                case '==': return (v1 == v2) ? options.fn(this) : options.inverse(this);
+                case '===': return (v1 === v2) ? options.fn(this) : options.inverse(this);
+                case '!=': return (v1 != v2) ? options.fn(this) : options.inverse(this);
+                case '!==': return (v1 !== v2) ? options.fn(this) : options.inverse(this);
+                case '<': return (v1 < v2) ? options.fn(this) : options.inverse(this);
+                case '<=': return (v1 <= v2) ? options.fn(this) : options.inverse(this);
+                case '>': return (v1 > v2) ? options.fn(this) : options.inverse(this);
+                case '>=': return (v1 >= v2) ? options.fn(this) : options.inverse(this);
+                case '&&': return (v1 && v2) ? options.fn(this) : options.inverse(this);
+                case '||': return (v1 || v2) ? options.fn(this) : options.inverse(this);
+                default: return options.inverse(this);
             }
         },
-
-        // Times helper for loops
         times: function(n, options) {
             let result = '';
             for (let i = 0; i < n; i++) {
@@ -205,13 +126,9 @@ app.engine('hbs', engine({
             }
             return result;
         },
-
-        // Default value helper
         default: function(value, defaultValue) {
             return value || defaultValue;
         },
-
-        // ✅ ADD: isRequired helper for generic import forms
         isRequired: function(field, requiredFields) {
             return requiredFields && requiredFields.includes(field);
         }
@@ -267,7 +184,17 @@ async function initializeApplication() {
             console.log('⚠️  Email Module: Not available (email functionality limited)');
         }
 
-        // 3. Initialize template management module
+        // ✅ ADD: 3. Initialize pipeline.js module (depends on database and email)
+        console.log('⚡ Initializing pipeline.js module...');
+        const pipelineInitialized = await pipelineModule.initialize();
+
+        if (pipelineInitialized && pipelineModule.isReady()) {
+            console.log('⚡ Pipeline Module: Initialized and ready');
+        } else {
+            console.log('⚠️  Pipeline Module: Not available (automation limited)');
+        }
+
+        // 4. Initialize template management module
         console.log('📝 Initializing template management module...');
         const templateInitialized = await templateManagementModule.initialize();
 
@@ -277,7 +204,7 @@ async function initializeApplication() {
             console.log('⚠️  Template Management: Initialization failed');
         }
 
-        // 4. Initialize admin module
+        // 5. Initialize admin module
         console.log('🎨 Initializing admin module...');
         const adminInitialized = await adminModule.initialize();
 
@@ -287,7 +214,7 @@ async function initializeApplication() {
             console.log('⚠️  Admin Module: Initialization failed');
         }
 
-        // 5. Initialize data import module
+        // 6. Initialize data import module
         console.log('📁 Initializing data import module...');
         const importInitialized = await dataImportModule.initialize();
 
@@ -297,7 +224,7 @@ async function initializeApplication() {
             console.log('⚠️  Data Import Module: Initialization failed (will retry on first use)');
         }
 
-        // 6. Setup routes after initialization
+        // 7. Setup routes after initialization
         console.log('🛣️  Setting up routes...');
 
         // Health check endpoint (enhanced with all module status)
@@ -306,6 +233,8 @@ async function initializeApplication() {
                 const dbStatus = await database.testConnection();
                 const emailStatus = emailModule.getStatus();
                 const emailConnectionTest = await emailModule.testConnection();
+                const pipelineStatus = pipelineModule.getStatus(); // ✅ ADD
+                const pipelineConnectionTest = await pipelineModule.testConnection(); // ✅ ADD
                 const importStatus = dataImportModule.getStatus();
                 const templateStatus = templateManagementModule.getStatus();
 
@@ -318,6 +247,8 @@ async function initializeApplication() {
                         modules: {
                             email: emailStatus,
                             emailConnection: emailConnectionTest,
+                            pipeline: pipelineStatus, // ✅ ADD
+                            pipelineConnection: pipelineConnectionTest, // ✅ ADD
                             dataImport: importStatus,
                             templateManagement: templateStatus
                         },
@@ -338,7 +269,7 @@ async function initializeApplication() {
         app.get('/api/auth/logout', authController.logout);
         app.get('/api/auth/verify', authController.verify);
 
-        // ✅ ADD: Email API routes
+        // Email API routes
         if (emailInitialized) {
             app.use('/api/email', emailModule.getRoutes());
             console.log('🛣️  Email API routes: ✅ Configured');
@@ -353,7 +284,22 @@ async function initializeApplication() {
             console.log('🛣️  Email API routes: ⚠️ Fallback configured');
         }
 
-        // ✅ ADD: Template management API routes
+        // ✅ ADD: Pipeline API routes
+        if (pipelineInitialized) {
+            app.use('/api/pipeline.js', pipelineModule.getRoutes());
+            console.log('🛣️  Pipeline API routes: ✅ Configured');
+        } else {
+            app.use('/api/pipeline.js', (req, res) => {
+                res.status(503).json({
+                    success: false,
+                    error: 'Pipeline service unavailable',
+                    message: 'Pipeline module initialization failed. Please contact administrator.'
+                });
+            });
+            console.log('🛣️  Pipeline API routes: ⚠️ Fallback configured');
+        }
+
+        // Template management API routes
         if (templateInitialized) {
             app.use('/api/templates', templateManagementModule.getRoutes());
             console.log('🛣️  Template management API routes: ✅ Configured');
@@ -368,12 +314,11 @@ async function initializeApplication() {
             console.log('🛣️  Template management API routes: ⚠️ Fallback configured');
         }
 
-        // Data Import API routes - only setup if module is initialized
+        // Data Import API routes
         if (importInitialized) {
             app.use('/api/data-import', dataImportModule.getRoutes());
             console.log('🛣️  Data import API routes: ✅ Configured');
         } else {
-            // Fallback routes for when module is not initialized
             app.use('/api/data-import', (req, res) => {
                 res.status(503).json({
                     success: false,
@@ -384,7 +329,7 @@ async function initializeApplication() {
             console.log('🛣️  Data import API routes: ⚠️ Fallback configured');
         }
 
-        // Admin interface routes - add generic import routes
+        // Admin interface routes
         app.use('/admin/import-data', adminModule.getRoutes().genericImport);
         app.use('/admin', adminModule.getRoutes().main);
         console.log('🛣️  Admin interface routes: ✅ Configured');
@@ -416,6 +361,7 @@ async function startServer() {
             console.log(`🔐 Admin login: http://localhost:${config.port}/admin/login`);
             console.log(`📁 Data Import: http://localhost:${config.port}/admin/import-data`);
             console.log(`📧 Email API: http://localhost:${config.port}/api/email/health`);
+            console.log(`⚡ Pipeline API: http://localhost:${config.port}/api/pipeline/health`); // ✅ ADD
             console.log(`📝 Templates API: http://localhost:${config.port}/api/templates`);
             console.log(`💡 Health check: http://localhost:${config.port}/api/health`);
             console.log('='.repeat(50));
@@ -443,6 +389,14 @@ async function startServer() {
                     console.log('📝 Template management module shutdown: ✅');
                 } catch (error) {
                     console.error('📝 Template management module shutdown: ❌', error.message);
+                }
+
+                // ✅ ADD: Shutdown pipeline.js module
+                try {
+                    await pipelineModule.shutdown();
+                    console.log('⚡ Pipeline module shutdown: ✅');
+                } catch (error) {
+                    console.error('⚡ Pipeline module shutdown: ❌', error.message);
                 }
 
                 try {
