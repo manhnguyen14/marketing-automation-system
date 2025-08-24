@@ -286,24 +286,24 @@ class QueueController {
 
     /**
      * Approve template
-     * POST /api/pipeline.js/queue/review/:templateId/approve
+     * POST /api/pipeline.js/queue/review/:templateCode/approve
      */
     async approveTemplate(req, res) {
         try {
-            const { templateId } = req.params;
+            const { templateCode } = req.params;
             const { scheduledDate } = req.body;
 
-            if (!templateId) {
+            if (!templateCode) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Template ID is required'
+                    error: 'Template code is required'
                 });
             }
 
-            console.log(`✅ Approving template: ${templateId}`);
+            console.log(`✅ Approving template: ${templateCode}`);
 
             const scheduleDate = scheduledDate ? new Date(scheduledDate) : new Date();
-            const result = await templateGenerationService.approveTemplate(parseInt(templateId), scheduleDate);
+            const result = await templateGenerationService.approveTemplate(templateCode, scheduleDate);
 
             res.json({
                 success: true,
@@ -323,23 +323,23 @@ class QueueController {
 
     /**
      * Reject template
-     * POST /api/pipeline.js/queue/review/:templateId/reject
+     * POST /api/pipeline.js/queue/review/:templateCode/reject
      */
     async rejectTemplate(req, res) {
         try {
-            const { templateId } = req.params;
+            const { templateCode } = req.params;
             const { reason = 'Content not approved' } = req.body;
 
-            if (!templateId) {
+            if (!templateCode) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Template ID is required'
+                    error: 'Template code is required'
                 });
             }
 
-            console.log(`❌ Rejecting template: ${templateId}`);
+            console.log(`❌ Rejecting template: ${templateCode}`);
 
-            const result = await templateGenerationService.rejectTemplate(parseInt(templateId), reason);
+            const result = await templateGenerationService.rejectTemplate(templateCode, reason);
 
             res.json({
                 success: true,

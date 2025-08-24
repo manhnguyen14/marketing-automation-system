@@ -26,7 +26,7 @@ class EmailQueueService {
 
         const query = `
             INSERT INTO email_queue_items (
-                customer_id, pipeline_name, status, template_id, scheduled_date,
+                customer_id, pipeline_name, status, template_code, scheduled_date,
                 context_data, variables, tag, retry_count, last_error
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -37,7 +37,7 @@ class EmailQueueService {
             item.customerId,
             item.pipelineName,
             item.status,
-            item.templateId,
+            item.templateCode,
             item.scheduledDate,
             item.contextData,
             item.variables,
@@ -66,7 +66,7 @@ class EmailQueueService {
 
                     const query = `
                         INSERT INTO email_queue_items (
-                            customer_id, pipeline_name, status, template_id, scheduled_date,
+                            customer_id, pipeline_name, status, template_code, scheduled_date,
                             context_data, variables, tag, retry_count, last_error
                         )
                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -74,7 +74,7 @@ class EmailQueueService {
                     `;
 
                     const values = [
-                        item.customerId, item.pipelineName, item.status, item.templateId,
+                        item.customerId, item.pipelineName, item.status, item.templateCode,
                         item.scheduledDate, item.contextData, item.variables, item.tag,
                         item.retryCount, item.lastError
                     ];
@@ -176,7 +176,7 @@ class EmailQueueService {
         if (!pool) throw new Error('Database not available');
 
         const allowedFields = [
-            'status', 'template_id', 'scheduled_date', 'context_data',
+            'status', 'template_code', 'scheduled_date', 'context_data',
             'variables', 'tag', 'retry_count', 'last_error'
         ];
 
@@ -225,9 +225,9 @@ class EmailQueueService {
         return await this.updateQueueItem(id, { status: newStatus });
     }
 
-    async markTemplateGenerated(id, templateId) {
+    async markTemplateGenerated(id, templateCode) {
         return await this.updateQueueItem(id, {
-            template_id: templateId,
+            template_code: templateCode,
             status: 'PENDING_REVIEW'
         });
     }

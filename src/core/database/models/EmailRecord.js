@@ -7,7 +7,7 @@ class EmailRecord {
         this.emailAddress = data.email_address || '';
         this.subject = data.subject || '';
         this.contentType = data.content_type || 'predefined';
-        this.templateId = data.template_id || null; // ✅ UPDATE: Changed from string to null
+        this.templateCode = data.template_code || null;
 
         // ✅ ADD: New fields for Postmark integration
         this.campaignId = data.campaign_id || null;
@@ -82,7 +82,7 @@ class EmailRecord {
 
     // ✅ ADD: Template-related methods
     hasTemplate() {
-        return this.templateId !== null;
+        return this.templateCode !== null;
     }
 
     isProcessedContent() {
@@ -189,7 +189,7 @@ class EmailRecord {
             email_address: this.emailAddress,
             subject: this.subject,
             content_type: this.contentType,
-            template_id: this.templateId,
+            template_code: this.templateCode,
             campaign_id: this.campaignId, // ✅ ADD
             processed_html_content: this.processedHtmlContent, // ✅ ADD
             processed_text_content: this.processedTextContent, // ✅ ADD
@@ -223,7 +223,7 @@ class EmailRecord {
             emailAddress: this.emailAddress,
             subject: this.subject,
             contentType: this.contentType,
-            templateId: this.templateId,
+            templateCode: this.templateCode,
             campaignId: this.campaignId, // ✅ ADD
             processedHtmlContent: this.processedHtmlContent, // ✅ ADD
             processedTextContent: this.processedTextContent, // ✅ ADD

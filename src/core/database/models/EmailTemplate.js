@@ -1,6 +1,7 @@
 class EmailTemplate {
     constructor(data = {}) {
         this.templateId = data.template_id || null;
+        this.templateCode = data.template_code || '';
         this.name = data.name || '';
         this.subjectTemplate = data.subject_template || '';
         this.htmlTemplate = data.html_template || '';
@@ -131,6 +132,18 @@ class EmailTemplate {
             errors.push('Template name is required');
         }
 
+        if (!this.templateCode || this.templateCode.trim().length === 0) {
+            errors.push('Template code is required');
+        }
+
+        if (this.templateCode && this.templateCode.length > 100) {
+            errors.push('Template code must be less than 100 characters');
+        }
+
+        if (this.templateCode && !/^[a-zA-Z0-9_-]+$/.test(this.templateCode)) {
+            errors.push('Template code can only contain letters, numbers, underscores, and hyphens');
+        }
+
         if (!this.subjectTemplate || this.subjectTemplate.trim().length === 0) {
             errors.push('Subject template is required');
         }
@@ -188,6 +201,7 @@ class EmailTemplate {
     toDatabaseFormat() {
         return {
             template_id: this.templateId,
+            template_code: this.templateCode,
             name: this.name,
             subject_template: this.subjectTemplate,
             html_template: this.htmlTemplate,
@@ -206,6 +220,7 @@ class EmailTemplate {
     toJSON() {
         return {
             templateId: this.templateId,
+            templateCode: this.templateCode,
             name: this.name,
             subjectTemplate: this.subjectTemplate,
             htmlTemplate: this.htmlTemplate,
@@ -248,6 +263,7 @@ class EmailTemplate {
             'name', 'subject_template', 'html_template', 'text_template',
             'status', 'variation', 'prompt', 'required_variables', 'category'
         ];
+        // Note: template_code is NOT in allowedFields - it cannot be updated after creation
 
         Object.keys(updateData).forEach(key => {
             if (allowedFields.includes(key)) {
@@ -273,6 +289,7 @@ class EmailTemplate {
     getTemplateInfo() {
         return {
             id: this.templateId,
+            code: this.templateCode,
             name: this.name,
             type: this.templateType,
             status: this.status,

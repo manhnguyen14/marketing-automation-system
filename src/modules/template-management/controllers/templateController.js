@@ -168,6 +168,51 @@ class TemplateController {
         }
     }
 
+    // Get template by code
+    async getTemplateByCode(req, res) {
+        try {
+            const { templateCode } = req.params;
+
+            if (!templateCode) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Template code is required'
+                });
+            }
+
+            console.log(`📄 Retrieving template by code: ${templateCode}`);
+
+            const template = await emailTemplateService.getTemplateByCode(templateCode);
+
+            if (!template) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Template not found'
+                });
+            }
+
+            // Get usage statistics using template ID for now (could be updated to use code)
+            const usageStats = await emailTemplateService.getTemplateUsageStats(template.templateId);
+
+            res.json({
+                success: true,
+                data: {
+                    template: template.toJSON(),
+                    usageStats: usageStats
+                },
+                message: 'Template retrieved successfully'
+            });
+
+        } catch (error) {
+            console.error('❌ Failed to get template by code:', error.message);
+            res.status(500).json({
+                success: false,
+                error: 'Failed to retrieve template',
+                details: error.message
+            });
+        }
+    }
+
     // Update template
     async updateTemplate(req, res) {
         try {
@@ -388,6 +433,47 @@ class TemplateController {
 
         } catch (error) {
             console.error('❌ Template preview failed:', error.message);
+
+            if (error.message.includes('not found')) {
+                res.status(404).json({
+                    success: false,
+                    error: 'Template not found'
+                });
+            } else {
+                res.status(500).json({
+                    success: false,
+                    error: 'Failed to generate template preview',
+                    details: error.message
+                });
+            }
+        }
+    }
+
+    // Preview template by code with variables
+    async previewTemplateByCode(req, res) {
+        try {
+            const { templateCode } = req.params;
+            const { variables = {} } = req.body;
+
+            if (!templateCode) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Template code is required'
+                });
+            }
+
+            console.log(`🔍 Generating template preview by code: ${templateCode}`);
+
+            const preview = await emailTemplateService.previewTemplateByCode(templateCode, variables);
+
+            res.json({
+                success: true,
+                data: preview,
+                message: 'Template preview generated successfully'
+            });
+
+        } catch (error) {
+            console.error('❌ Template preview by code failed:', error.message);
 
             if (error.message.includes('not found')) {
                 res.status(404).json({

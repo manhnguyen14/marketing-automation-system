@@ -26,9 +26,9 @@ class EmailRecordService {
 
         const query = `
             INSERT INTO email_records (
-                job_id, pipeline_id, recipient_id, email_address, subject, 
-                content_type, template_id, campaign_id, processed_html_content, 
-                processed_text_content, variables_used, cc_emails, bcc_emails, 
+                job_id, pipeline_id, recipient_id, email_address, subject,
+                content_type, template_code, campaign_id, processed_html_content,
+                processed_text_content, variables_used, cc_emails, bcc_emails,
                 reply_to, tag_string, metadata, batch_id
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
@@ -42,7 +42,7 @@ class EmailRecordService {
             email.emailAddress,
             email.subject,
             email.contentType,
-            emailData.template_id || null,
+            emailData.template_code || null,
             emailData.campaign_id || null,
             emailData.processed_html_content || null,
             emailData.processed_text_content || null,
@@ -79,9 +79,9 @@ class EmailRecordService {
 
                     const query = `
                         INSERT INTO email_records (
-                            job_id, pipeline_id, recipient_id, email_address, subject, 
-                            content_type, template_id, campaign_id, processed_html_content, 
-                            processed_text_content, variables_used, cc_emails, bcc_emails, 
+                            job_id, pipeline_id, recipient_id, email_address, subject,
+                            content_type, template_code, campaign_id, processed_html_content,
+                            processed_text_content, variables_used, cc_emails, bcc_emails,
                             reply_to, tag_string, metadata, batch_id
                         )
                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
@@ -95,7 +95,7 @@ class EmailRecordService {
                         email.emailAddress,
                         email.subject,
                         email.contentType,
-                        emailData.template_id || null,
+                        emailData.template_code || null,
                         emailData.campaign_id || null,
                         emailData.processed_html_content || null,
                         emailData.processed_text_content || null,
@@ -200,14 +200,14 @@ class EmailRecordService {
         return result.rows.map(row => EmailRecord.fromDatabaseRow(row));
     }
 
-    async getEmailsByTemplate(templateId, options = {}) {
+    async getEmailsByTemplate(templateCode, options = {}) {
         const pool = this.getPool();
         if (!pool) throw new Error('Database not available');
 
         const { limit = 100, offset = 0, startDate, endDate } = options;
 
-        let query = 'SELECT * FROM email_records WHERE template_id = $1';
-        const values = [templateId];
+        let query = 'SELECT * FROM email_records WHERE template_code = $1';
+        const values = [templateCode];
         let paramCount = 1;
 
         if (startDate) {
@@ -328,7 +328,7 @@ class EmailRecordService {
         const pool = this.getPool();
         if (!pool) throw new Error('Database not available');
 
-        const { campaignId, templateId, startDate, endDate, batchId } = filters;
+        const { campaignId, templateCode, startDate, endDate, batchId } = filters;
 
         let query = `
             SELECT 
@@ -351,10 +351,10 @@ class EmailRecordService {
             values.push(campaignId);
         }
 
-        if (templateId) {
+        if (templateCode) {
             paramCount++;
-            query += ` AND template_id = $${paramCount}`;
-            values.push(templateId);
+            query += ` AND template_code = $${paramCount}`;
+            values.push(templateCode);
         }
 
         if (batchId) {
@@ -496,7 +496,7 @@ class EmailRecordService {
         const pool = this.getPool();
         if (!pool) throw new Error('Database not available');
 
-        const { campaignId, templateId, deliveryStatus, startDate, endDate } = filters;
+        const { campaignId, templateCode, deliveryStatus, startDate, endDate } = filters;
 
         let query = 'SELECT COUNT(*) as count FROM email_records WHERE 1=1';
         const values = [];
@@ -508,10 +508,10 @@ class EmailRecordService {
             values.push(campaignId);
         }
 
-        if (templateId) {
+        if (templateCode) {
             paramCount++;
-            query += ` AND template_id = $${paramCount}`;
-            values.push(templateId);
+            query += ` AND template_code = $${paramCount}`;
+            values.push(templateCode);
         }
 
         if (deliveryStatus) {

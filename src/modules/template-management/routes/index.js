@@ -9,6 +9,7 @@ router.use(requireAuth);
 // Template CRUD operations
 router.get('/', templateController.getAllTemplates);
 router.post('/', templateController.createTemplate);
+router.get('/by-code/:templateCode', templateController.getTemplateByCode);
 router.get('/:templateId', templateController.getTemplateById);
 router.put('/:templateId', templateController.updateTemplate);
 router.delete('/:templateId', templateController.deleteTemplate);
@@ -19,6 +20,7 @@ router.get('/review/pending', templateController.getTemplatesWaitingReview);
 
 // Template preview and testing
 router.post('/:templateId/preview', templateController.previewTemplate);
+router.post('/by-code/:templateCode/preview', templateController.previewTemplateByCode);
 
 // Template search and discovery
 router.get('/search/query', templateController.searchTemplates);

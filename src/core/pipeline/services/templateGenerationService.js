@@ -119,18 +119,18 @@ class TemplateGenerationService {
             queueItem.id
         );
 
-        if (!result.templateId) {
-            throw new Error(result.error || 'Template generation returned no template ID');
+        if (!result.templateCode) {
+            throw new Error(result.error || 'Template generation returned no template code');
         }
 
         // Update queue item with generated template
-        await emailQueueService.markTemplateGenerated(queueItem.id, result.templateId);
+        await emailQueueService.markTemplateGenerated(queueItem.id, result.templateCode);
 
-        console.log(`📝 Template ${result.templateId} generated and queued for review`);
+        console.log(`📝 Template ${result.templateCode} generated and queued for review`);
 
         return {
             queueItemId: queueItem.id,
-            templateId: result.templateId,
+            templateCode: result.templateCode,
             customerId: queueItem.customerId,
             pipelineName: queueItem.pipelineName
         };
@@ -174,7 +174,7 @@ class TemplateGenerationService {
             for (const template of templates) {
                 // Find queue items using this template
                 const queueItems = await emailQueueService.getQueueItemsByStatus('PENDING_REVIEW');
-                const relatedItems = queueItems.filter(item => item.templateId === template.templateId);
+                const relatedItems = queueItems.filter(item => item.templateCode === template.templateCode);
 
                 enrichedTemplates.push({
                     ...template.toJSON(),
@@ -191,23 +191,29 @@ class TemplateGenerationService {
 
     /**
      * Approve AI-generated template
-     * @param {number} templateId - Template ID
+     * @param {string} templateCode - Template code
      * @param {Date} scheduledDate - When to schedule emails
      * @returns {Promise<Object>} Approval result
      */
-    async approveTemplate(templateId, scheduledDate = new Date()) {
+    async approveTemplate(templateCode, scheduledDate = new Date()) {
         try {
-            console.log(`✅ Approving template ${templateId}`);
+            console.log(`✅ Approving template ${templateCode}`);
+
+            // Get template by code first to get the ID for the approval
+            const template = await emailTemplateService.getTemplateByCode(templateCode);
+            if (!template) {
+                throw new Error('Template not found');
+            }
 
             // Update template status to APPROVED
-            await emailTemplateService.approveTemplate(templateId);
+            await emailTemplateService.approveTemplate(template.templateId);
 
             // Find and update related queue items
             const queueItems = await emailQueueService.getQueueItemsByStatus('PENDING_REVIEW');
-            const relatedItems = queueItems.filter(item => item.templateId === templateId);
+            const relatedItems = queueItems.filter(item => item.templateCode === templateCode);
 
             const results = {
-                templateId,
+                templateCode,
                 approvedQueueItems: 0,
                 scheduledDate
             };
@@ -221,30 +227,36 @@ class TemplateGenerationService {
 
             return results;
         } catch (error) {
-            console.error(`❌ Failed to approve template ${templateId}:`, error.message);
+            console.error(`❌ Failed to approve template ${templateCode}:`, error.message);
             throw error;
         }
     }
 
     /**
      * Reject AI-generated template
-     * @param {number} templateId - Template ID
+     * @param {string} templateCode - Template code
      * @param {string} reason - Rejection reason
      * @returns {Promise<Object>} Rejection result
      */
-    async rejectTemplate(templateId, reason = 'Content not approved') {
+    async rejectTemplate(templateCode, reason = 'Content not approved') {
         try {
-            console.log(`❌ Rejecting template ${templateId}: ${reason}`);
+            console.log(`❌ Rejecting template ${templateCode}: ${reason}`);
+
+            // Get template by code first to get the ID for the status update
+            const template = await emailTemplateService.getTemplateByCode(templateCode);
+            if (!template) {
+                throw new Error('Template not found');
+            }
 
             // Update template status to INACTIVE
-            await emailTemplateService.updateTemplateStatus(templateId, 'INACTIVE');
+            await emailTemplateService.updateTemplateStatus(template.templateId, 'INACTIVE');
 
             // Find and update related queue items
             const queueItems = await emailQueueService.getQueueItemsByStatus('PENDING_REVIEW');
-            const relatedItems = queueItems.filter(item => item.templateId === templateId);
+            const relatedItems = queueItems.filter(item => item.templateCode === templateCode);
 
             const results = {
-                templateId,
+                templateCode,
                 rejectedQueueItems: 0,
                 reason
             };
@@ -258,7 +270,7 @@ class TemplateGenerationService {
 
             return results;
         } catch (error) {
-            console.error(`❌ Failed to reject template ${templateId}:`, error.message);
+            console.error(`❌ Failed to reject template ${templateCode}:`, error.message);
             throw error;
         }
     }

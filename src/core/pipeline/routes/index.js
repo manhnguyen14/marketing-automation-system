@@ -34,8 +34,8 @@ router.put('/queue/:id/status', authMiddleware.requireAuth, queueController.upda
 // Template generation
 router.post('/queue/generate-templates', authMiddleware.requireAuth, queueController.triggerTemplateGeneration);
 router.get('/queue/review', authMiddleware.requireAuth, queueController.getTemplatesForReview);
-router.post('/queue/review/:templateId/approve', authMiddleware.requireAuth, queueController.approveTemplate);
-router.post('/queue/review/:templateId/reject', authMiddleware.requireAuth, queueController.rejectTemplate);
+router.post('/queue/review/:templateCode/approve', authMiddleware.requireAuth, queueController.approveTemplate);
+router.post('/queue/review/:templateCode/reject', authMiddleware.requireAuth, queueController.rejectTemplate);
 
 // Health check
 router.get('/health', (req, res) => {

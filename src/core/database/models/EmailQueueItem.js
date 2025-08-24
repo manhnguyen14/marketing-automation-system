@@ -4,7 +4,7 @@ class EmailQueueItem {
         this.customerId = data.customer_id || null;
         this.pipelineName = data.pipeline_name || '';
         this.status = data.status || 'WAIT_GENERATE_TEMPLATE';
-        this.templateId = data.template_id || null;
+        this.templateCode = data.template_code || null;
         this.scheduledDate = data.scheduled_date || null;
         this.contextData = data.context_data || {};
         this.variables = data.variables || {};
@@ -54,7 +54,7 @@ class EmailQueueItem {
 
     // Template methods
     hasTemplate() {
-        return this.templateId !== null;
+        return this.templateCode !== null;
     }
 
     needsTemplate() {
@@ -112,7 +112,7 @@ class EmailQueueItem {
             customer_id: this.customerId,
             pipeline_name: this.pipelineName,
             status: this.status,
-            template_id: this.templateId,
+            template_code: this.templateCode,
             scheduled_date: this.scheduledDate,
             context_data: this.contextData,
             variables: this.variables,
@@ -130,7 +130,7 @@ class EmailQueueItem {
             customerId: this.customerId,
             pipelineName: this.pipelineName,
             status: this.status,
-            templateId: this.templateId,
+            templateCode: this.templateCode,
             scheduledDate: this.scheduledDate,
             contextData: this.contextData,
             variables: this.variables,
@@ -176,8 +176,8 @@ class EmailQueueItem {
         this.updatedAt = new Date();
     }
 
-    markTemplateGenerated(templateId) {
-        this.templateId = templateId;
+    markTemplateGenerated(templateCode) {
+        this.templateCode = templateCode;
         this.status = 'PENDING_REVIEW';
         this.updatedAt = new Date();
     }

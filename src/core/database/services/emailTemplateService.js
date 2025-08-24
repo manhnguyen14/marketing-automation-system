@@ -26,15 +26,16 @@ class EmailTemplateService {
 
         const query = `
             INSERT INTO email_templates (
-                name, subject_template, html_template, text_template, 
+                name, template_code, subject_template, html_template, text_template,
                 template_type, status, variation, prompt, required_variables, category
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING *
         `;
 
         const values = [
             template.name,
+            template.templateCode,
             template.subjectTemplate,
             template.htmlTemplate,
             template.textTemplate,
@@ -51,7 +52,11 @@ class EmailTemplateService {
             return EmailTemplate.fromDatabaseRow(result.rows[0]);
         } catch (error) {
             if (error.code === '23505') { // Unique violation
-                throw new Error('Template with this name and category already exists');
+                if (error.constraint && error.constraint.includes('template_code')) {
+                    throw new Error('Template with this code already exists');
+                } else {
+                    throw new Error('Template with this name and category already exists');
+                }
             }
             throw error;
         }
@@ -64,6 +69,20 @@ class EmailTemplateService {
 
         const query = 'SELECT * FROM email_templates WHERE template_id = $1';
         const result = await pool.query(query, [templateId]);
+
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        return EmailTemplate.fromDatabaseRow(result.rows[0]);
+    }
+
+    async getTemplateByCode(templateCode) {
+        const pool = this.getPool();
+        if (!pool) throw new Error('Database not available');
+
+        const query = 'SELECT * FROM email_templates WHERE template_code = $1';
+        const result = await pool.query(query, [templateCode]);
 
         if (result.rows.length === 0) {
             return null;
@@ -330,8 +349,36 @@ class EmailTemplateService {
         return template.renderComplete(variables);
     }
 
+    async renderTemplateByCode(templateCode, variables = {}) {
+        const template = await this.getTemplateByCode(templateCode);
+        if (!template) {
+            throw new Error('Template not found');
+        }
+
+        if (!template.canBeUsedForSending()) {
+            throw new Error('Template is not approved for sending');
+        }
+
+        const variableValidation = template.validateVariableValues(variables);
+        if (!variableValidation.isValid) {
+            throw new Error(`Variable validation failed: ${variableValidation.errors.join(', ')}`);
+        }
+
+        return template.renderComplete(variables);
+    }
+
     async previewTemplate(templateId, variables = {}) {
         const template = await this.getTemplateById(templateId);
+        if (!template) {
+            throw new Error('Template not found');
+        }
+
+        // Allow preview even for non-approved templates
+        return template.renderComplete(variables);
+    }
+
+    async previewTemplateByCode(templateCode, variables = {}) {
+        const template = await this.getTemplateByCode(templateCode);
         if (!template) {
             throw new Error('Template not found');
         }

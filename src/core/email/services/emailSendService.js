@@ -100,7 +100,7 @@ class EmailSendService {
 
     // ✅ ADD: Send individual queued email
     async sendQueuedEmail(queueItem) {
-        console.log(`📤 Sending queued email for customer ${queueItem.customerId}, template ${queueItem.templateId}`);
+        console.log(`📤 Sending queued email for customer ${queueItem.customerId}, template ${queueItem.templateCode}`);
 
         // Get customer details
         const customer = await customerService.getCustomerById(queueItem.customerId);
@@ -109,7 +109,7 @@ class EmailSendService {
         }
 
         // Get and validate template
-        const template = await emailTemplateService.getTemplateById(queueItem.templateId);
+        const template = await emailTemplateService.getTemplateByCode(queueItem.templateCode);
         if (!template) {
             throw new Error('Template not found');
         }
@@ -136,7 +136,7 @@ class EmailSendService {
             email_address: customer.email,
             subject: renderedContent.subject,
             content_type: template.templateType,
-            template_id: queueItem.templateId,
+            template_code: queueItem.templateCode,
             campaign_id: queueItem.pipelineName,
             processed_html_content: renderedContent.html,
             processed_text_content: renderedContent.text,
@@ -156,7 +156,7 @@ class EmailSendService {
             tag: queueItem.tag,
             metadata: {
                 customerId: customer.customerId,
-                templateId: queueItem.templateId,
+                templateCode: queueItem.templateCode,
                 campaignId: queueItem.pipelineName,
                 queueItemId: queueItem.id,
                 emailRecordId: emailRecordResult.emailId
@@ -194,7 +194,7 @@ class EmailSendService {
     async sendBatchEmailsWithTemplate(batchData) {
         try {
             const {
-                templateId,
+                templateCode,
                 recipients,
                 campaignId,
                 ccEmails = [],
@@ -205,9 +205,9 @@ class EmailSendService {
             } = batchData;
 
             // Validate template
-            const template = await emailTemplateService.getTemplateById(templateId);
+            const template = await emailTemplateService.getTemplateByCode(templateCode);
             if (!template) {
-                throw new Error(`Template with ID ${templateId} not found`);
+                throw new Error(`Template with code ${templateCode} not found`);
             }
 
             if (!template.canBeUsedForSending()) {
@@ -253,7 +253,7 @@ class EmailSendService {
                         metadata: {
                             ...metadata,
                             customerId: customer.customerId,
-                            templateId: templateId,
+                            templateCode: templateCode,
                             campaignId: campaignId,
                             batchId: batchId
                         },
@@ -270,7 +270,7 @@ class EmailSendService {
                         email_address: recipient.customerEmail,
                         subject: renderedContent.subject,
                         content_type: template.templateType,
-                        template_id: templateId,
+                        template_code: templateCode,
                         campaign_id: campaignId,
                         processed_html_content: renderedContent.html,
                         processed_text_content: renderedContent.text,
@@ -319,7 +319,7 @@ class EmailSendService {
             return {
                 success: true,
                 batchId: batchId,
-                templateId: templateId,
+                templateCode: templateCode,
                 campaignId: campaignId,
                 totalEmails: recipients.length,
                 processedEmails: emailsToSend.length,
@@ -364,11 +364,11 @@ class EmailSendService {
     }
 
     // Preview template rendering without sending
-    async previewEmailTemplate(templateId, variables = {}) {
+    async previewEmailTemplate(templateCode, variables = {}) {
         try {
-            const template = await emailTemplateService.getTemplateById(templateId);
+            const template = await emailTemplateService.getTemplateByCode(templateCode);
             if (!template) {
-                throw new Error(`Template with ID ${templateId} not found`);
+                throw new Error(`Template with code ${templateCode} not found`);
             }
 
             // Validate variables
@@ -386,7 +386,7 @@ class EmailSendService {
 
             return {
                 success: true,
-                templateId: templateId,
+                templateCode: templateCode,
                 templateName: template.name,
                 variables: variables,
                 renderedContent: renderedContent,
@@ -421,8 +421,8 @@ class EmailSendService {
     validateBatchEmailData(batchData) {
         const errors = [];
 
-        if (!batchData.templateId) {
-            errors.push('Template ID is required');
+        if (!batchData.templateCode) {
+            errors.push('Template code is required');
         }
 
         if (!batchData.recipients || !Array.isArray(batchData.recipients) || batchData.recipients.length === 0) {
