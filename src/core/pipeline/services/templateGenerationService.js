@@ -228,7 +228,7 @@ class TemplateGenerationService {
 
             return results;
         } catch (error) {
-            console.error(`❌ Failed to approve template ${templateCode}:`, error.message);
+            console.error(`❌ Failed to approve template ${templateId}:`, error.message);
             throw error;
         }
     }

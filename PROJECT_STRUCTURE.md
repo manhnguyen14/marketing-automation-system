@@ -17,6 +17,11 @@
 - src/core/email/controllers/
 - src/core/email/services/
 - src/core/email/routes/
+- src/core/pipeline/
+- src/core/pipeline/controllers/
+- src/core/pipeline/services/
+- src/core/pipeline/pipelines/
+- src/core/pipeline/routes/
 - src/modules/
 - src/modules/admin/
 - src/modules/admin/controllers/
@@ -51,6 +56,7 @@
 - src/app.js
 - src/config/index.js
 - src/config/email.js
+- src/config/pipeline.js
 - src/core/auth/controllers/authController.js
 - src/core/auth/middleware/authMiddleware.js
 - src/core/auth/services/authService.js
@@ -61,25 +67,43 @@
 - src/core/database/models/Book.js
 - src/core/database/models/EmailRecord.js
 - src/core/database/models/EmailTemplate.js
+- src/core/database/models/EmailQueueItem.js
+- src/core/database/models/PipelineExecutionLog.js
 - src/core/database/services/customerService.js
 - src/core/database/services/bookService.js
 - src/core/database/services/emailTemplateService.js
 - src/core/database/services/emailRecordService.js
+- src/core/database/services/emailQueueService.js
+- src/core/database/services/pipelineExecutionService.js
 - src/core/database/migrations/000_create_schema_migrations.sql
 - src/core/database/migrations/001_create_customers.sql
 - src/core/database/migrations/002_create_books.sql
 - src/core/database/migrations/005_create_email_records.sql
 - src/core/database/migrations/006_create_email_templates.sql
 - src/core/database/migrations/007_update_email_records.sql
+- src/core/database/migrations/008_create_email_queue.sql
+- src/core/database/migrations/009_create_pipeline_execution_log.sql
+- src/core/database/migrations/010_add_template_code_to_email_templates.sql
+- src/core/database/migrations/011_update_email_records_template_code.sql
+- src/core/database/migrations/012_update_email_queue_items_template_code.sql
 - src/core/database/index.js
 - src/core/email/controllers/emailController.js
 - src/core/email/services/postmarkService.js
 - src/core/email/services/emailSendService.js
 - src/core/email/routes/index.js
 - src/core/email/index.js
+- src/core/pipeline/controllers/pipelineController.js
+- src/core/pipeline/controllers/queueController.js
+- src/core/pipeline/services/pipelineOrchestrator.js
+- src/core/pipeline/services/templateGenerationService.js
+- src/core/pipeline/services/pipelineRegistry.js
+- src/core/pipeline/routes/index.js
+- src/core/pipeline/index.js
+- src/core/pipeline/pipelines/PipelineInterface.js
 - src/modules/admin/controllers/authUIController.js
 - src/modules/admin/controllers/dashboardController.js
 - src/modules/admin/controllers/genericImportUIController.js
+- src/modules/admin/controllers/pipelineUIController.js
 - src/modules/admin/views/layouts/main.hbs
 - src/modules/admin/views/login.hbs
 - src/modules/admin/views/dashboard.hbs
@@ -87,8 +111,11 @@
 - src/modules/admin/views/import-entity-selection.hbs
 - src/modules/admin/views/import-error-report.hbs
 - src/modules/admin/views/import-generic.hbs
+- src/modules/admin/views/pipeline.hbs
+- src/modules/admin/views/queue-management.hbs
 - src/modules/admin/routes/index.js
 - src/modules/admin/routes/genericImportRoutes.js
+- src/modules/admin/routes/pipelineRoutes.js
 - src/modules/admin/index.js
 - src/modules/data-import/config/importConfigs.js
 - src/modules/data-import/controllers/genericImportController.js
@@ -128,25 +155,32 @@
 - src/core/database/models/Book.js: "Book catalog model with search and categorization methods"
 - src/core/database/models/EmailRecord.js: "Extended email campaign tracking model with Postmark integration fields and comprehensive analytics"
 - src/core/database/models/EmailTemplate.js: "Email template data model with variable extraction, template processing, validation, and approval workflow"
+- src/core/database/models/EmailQueueItem.js: "Email queue item model for pipeline-based email processing with AI template generation and status tracking"
+- src/core/database/models/PipelineExecutionLog.js: "Pipeline execution log model for tracking pipeline runs, status, and errors"
 - src/core/database/services/customerService.js: "Customer CRUD operations, marketing queries, and import-compatible methods"
 - src/core/database/services/bookService.js: "Book management operations and recommendation queries"
 - src/core/database/services/emailTemplateService.js: "Email template CRUD operations, template rendering, approval workflow, and analytics"
 - src/core/database/services/emailRecordService.js: "Email record operations, bulk operations, Postmark tracking, delivery status updates, and metrics"
-- src/core/database/migrations/000_create_schema_migrations.sql: "Migration tracking table creation"
-- src/core/database/migrations/001_create_customers.sql: "Customer table creation with indexes and constraints (no company field)"
-- src/core/database/migrations/002_create_books.sql: "Books table creation with categorization support"
-- src/core/database/migrations/005_create_email_records.sql: "Email campaign tracking table with Postmark integration"
-- src/core/database/migrations/006_create_email_templates.sql: "Email templates table creation with approval workflow and A/B testing support"
-- src/core/database/migrations/007_update_email_records.sql: "Email records table extension with Postmark integration fields and batch tracking"
+- src/core/database/services/emailQueueService.js: "Email queue item operations, bulk operations, status updates, and metrics"
+- src/core/database/services/pipelineExecutionService.js: "Pipeline execution log operations, bulk operations, status updates, and metrics"
 - src/core/database/index.js: "Database module exports and initialization coordination with email services"
 - src/core/email/controllers/emailController.js: "Email API controller for batch sending, template preview, service monitoring, and delivery tracking"
 - src/core/email/services/postmarkService.js: "Postmark API integration service for email sending, tracking, rate limiting, and error handling"
 - src/core/email/services/emailSendService.js: "Email orchestration service coordinating template processing, validation, database records, and Postmark delivery"
 - src/core/email/routes/index.js: "Email API routes configuration with authentication middleware for /api/email endpoints"
 - src/core/email/index.js: "Core email module orchestrator with initialization, status monitoring, and service coordination"
+- src/core/pipeline/controllers/pipelineController.js: "Pipeline API controller for managing pipelines, including creation, execution, and monitoring"
+- src/core/pipeline/controllers/queueController.js: "Queue API controller for managing email queue items, including creation, execution, and monitoring"
+- src/core/pipeline/services/pipelineOrchestrator.js: "Pipeline orchestrator service for executing pipelines, managing queue items, and monitoring execution status"
+- src/core/pipeline/services/templateGenerationService.js: "Template generation service for processing AI-generated templates, validation, and approval workflow"
+- src/core/pipeline/services/pipelineRegistry.js: "Pipeline registry service for managing pipeline configurations, validation, and execution instructions"
+- src/core/pipeline/pipelines/PipelineInterface.js: "Interface for pipeline implementations with methods for running pipelines, creating queue items, and generating templates"
+- src/core/pipeline/routes/index.js: "Pipeline API routes configuration with authentication middleware for /api/pipeline endpoints"
+- src/core/pipeline/index.js: "Core pipeline module orchestrator with initialization, status monitoring, and service coordination"
 - src/modules/admin/controllers/authUIController.js: "Login page rendering and UI logic (unchanged)"
 - src/modules/admin/controllers/dashboardController.js: "Admin dashboard rendering and data preparation (unchanged)"
 - src/modules/admin/controllers/genericImportUIController.js: "Generic import UI controller for handling entity selection and import forms"
+- src/modules/admin/controllers/pipelineUIController.js: "Pipeline UI controller for handling pipeline management and execution"
 - src/modules/admin/views/layouts/main.hbs: "Base HTML template with navigation including Data Import link"
 - src/modules/admin/views/login.hbs: "Login form with client-side validation and error handling (unchanged)"
 - src/modules/admin/views/dashboard.hbs: "Admin dashboard with system status and feature overview (unchanged)"
@@ -154,8 +188,11 @@
 - src/modules/admin/views/import-entity-selection.hbs: "Entity selection page for data import with grid of importable entities"
 - src/modules/admin/views/import-error-report.hbs: "Error report template for displaying import validation errors"
 - src/modules/admin/views/import-generic.hbs: "Generic import form for uploading and processing CSV files"
+- src/modules/admin/views/pipeline.hbs: "Pipeline management page for viewing, executing, and monitoring pipelines"
+- src/modules/admin/views/queue-management.hbs: "Queue management page for reviewing and approving AI-generated templates, and monitoring queue status"
 - src/modules/admin/routes/index.js: "Admin interface URL routing with CSV import routes and file upload middleware"
 - src/modules/admin/routes/genericImportRoutes.js: "Routes for generic entity import functionality"
+- src/modules/admin/routes/pipelineRoutes.js: "Routes for pipeline management functionality"
 - src/modules/admin/index.js: "Admin module exports aggregation (unchanged)"
 - src/modules/data-import/config/importConfigs.js: "Configuration for different entity import types and validation rules"
 - src/modules/data-import/controllers/genericImportController.js: "API controller for generic entity import operations"
@@ -242,6 +279,20 @@
 - email_records_table: "Extended with Postmark integration fields for comprehensive tracking"
 - emailTemplateService: "Complete template lifecycle management with variable validation"
 - emailRecordService: "Email execution tracking with Postmark response correlation"
+
+## PIPELINE_ARCHITECTURE
+
+### pipeline_core_module:
+- location: "src/core/pipeline/"
+- purpose: "Marketing automation pipelines with queue processing and AI template generation"
+- characteristics: ["pipeline_automation", "queue_management", "ai_template_generation", "email_orchestration"]
+
+### pipeline_components:
+- pipelineController: "API endpoints for pipeline management and execution"
+- queueController: "API endpoints for queue management and template review"
+- pipelineOrchestrator: "Pipeline execution orchestration and status monitoring"
+- templateGenerationService: "AI template generation, validation, and approval workflow"
+- pipelineRegistry: "Pipeline configuration management and validation"
 
 ## DATA_IMPORT_ARCHITECTURE
 

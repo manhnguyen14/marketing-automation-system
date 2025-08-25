@@ -58,6 +58,7 @@ module.exports = {
     // Queue processing settings
     queueProcessing: {
         scanIntervalSeconds: parseInt(process.env.QUEUE_SCAN_INTERVAL_SECONDS) || 60,
+        scanSendMailIntervalSeconds: parseInt(process.env.QUEUE_SCAN_SEND_MAIL_INTERVAL_SECONDS) || 120,
         batchSize: parseInt(process.env.QUEUE_BATCH_SIZE) || 50,
         maxProcessingTime: parseInt(process.env.MAX_PROCESSING_TIME_SECONDS) || 300
     },

@@ -4,6 +4,7 @@ const emailRecordService = require('../../database/services/emailRecordService')
 const customerService = require('../../database/services/customerService');
 const emailQueueService = require('../../database/services/emailQueueService'); // ✅ ADD
 const config = require('../../../config');
+const pipelineConfig = require('../../../config/pipeline');
 
 class EmailSendService {
     constructor() {
@@ -16,6 +17,11 @@ class EmailSendService {
             postmarkService.initialize();
             this.isInitialized = true;
             console.log('✅ Email send service initialized');
+
+            // start queue processing
+            if (pipelineConfig.queueProcessing.scanSendMailIntervalSeconds > 0) {
+                this.startQueueProcessing();
+            }
         } catch (error) {
             console.error('❌ Email send service initialization failed:', error.message);
             throw error;
@@ -96,6 +102,30 @@ class EmailSendService {
         } finally {
             this.queueProcessing = false;
         }
+    }
+
+    // ✅ ADD: Start background queue processing, call processEmailQueue
+    startQueueProcessing() {
+        const intervalMs = pipelineConfig.queueProcessing.scanSendMailIntervalSeconds * 1000;
+
+        console.log(`🔄 Starting queue processing (${pipelineConfig.queueProcessing.scanSendMailIntervalSeconds}s interval)`);
+
+        this.queueInterval = setInterval(async () => {
+            try {
+                if (!this.isQueueProcessing()) {
+                    console.log('🔄 Sending emails from email queue...');
+                    const result = await this.processEmailQueue(
+                        pipelineConfig.queueProcessing.batchSize
+                    );
+
+                    if (result.processed > 0) {
+                        console.log(`📧 Sent ${result.succeeded} emails, ${result.failed} failed`);
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Background queue processing failed:', error.message);
+            }
+        }, intervalMs);
     }
 
     // ✅ ADD: Send individual queued email

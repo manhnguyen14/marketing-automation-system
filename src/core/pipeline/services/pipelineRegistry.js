@@ -1,6 +1,6 @@
 const DailyMotivationPipeline = require('../pipelines/DailyMotivationPipeline');
 const NewBookReleasePipeline = require('../pipelines/NewBookReleasePipeline');
-
+const WelcomeNewMemberPipeline = require('../pipelines/WelcomeNewMemberPipeline');
 /**
  * Hardcoded registry of all available pipelines
  */
@@ -20,11 +20,22 @@ const PIPELINES = {
         description: 'Announce new books to interested customers',
         templateType: 'predefined',
         requiresReview: false,
-        defaultTemplateCode: null, // Set dynamically when template is created
+        defaultTemplateId: null, // Set dynamically when template is created
         class: NewBookReleasePipeline,
         category: 'marketing',
         frequency: 'on_demand',
         estimatedRecipients: '50-200 customers per book'
+    },
+    'WELCOME_NEW_MEMBER': {
+        displayName: 'Welcome New Members',
+        description: 'Welcome emails for new customers',
+        templateType: 'predefined',
+        requiresReview: false,
+        defaultTemplateId: null, // Set dynamically when template is created
+        class: WelcomeNewMemberPipeline,
+        category: 'onboarding',
+        frequency: 'daily',
+        estimatedRecipients: '10-50 new customers'
     }
 };
 

@@ -84,6 +84,8 @@ class EmailTemplateService {
         const query = 'SELECT * FROM email_templates WHERE template_code = $1';
         const result = await pool.query(query, [templateCode]);
 
+        console.log('Found:', result.rows.length, 'rows with code:', templateCode);
+
         if (result.rows.length === 0) {
             return null;
         }
